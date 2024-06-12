@@ -7,13 +7,20 @@ void Game::Stop()
 
 void Game::Run()
 {
-	while (mRunning && !window.ShouldWindowClose())
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	while (mRunning)
 	{
+		glClear(GL_COLOR_BUFFER_BIT);
 		// Game code here
+		
+		
 
-
-		glfwSwapBuffers(window.GetWindowPointer());
+		glfwSwapBuffers(mWindow.GetWindowPointer());
 		glfwPollEvents();
+		if (mWindow.ShouldWindowClose())
+		{
+			Stop();
+		}
 	}
 }
 

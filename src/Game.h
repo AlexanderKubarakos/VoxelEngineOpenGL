@@ -1,6 +1,8 @@
 #pragma once
 #include "Window.hpp"
 
+#include "OpenGL/Shaders/Shader.h"
+
 class Game
 {
 public:
@@ -9,5 +11,6 @@ public:
 
 private:
 	bool mRunning = true;
-	Window window {800, 800, "MyGame"};
+	Window mWindow {800, 800, "MyGame"};
+	Shader mShader {"src/OpenGL/Shaders/vertexShader.glsl", "src/OpenGL/Shaders/fragmentShader.glsl"};
 };

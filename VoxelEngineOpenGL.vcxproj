@@ -136,6 +136,9 @@
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\OpenGL\Shaders\Shader.cpp" />
+    <ClCompile Include="src\OpenGL\VAO.cpp" />
+    <ClCompile Include="src\OpenGL\VBO.cpp" />
     <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -435,6 +438,9 @@
     <ClInclude Include="includes\glm\vector_relational.hpp" />
     <ClInclude Include="includes\KHR\khrplatform.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\OpenGL\Shaders\Shader.h" />
+    <ClInclude Include="src\OpenGL\VAO.h" />
+    <ClInclude Include="src\OpenGL\VBO.h" />
     <ClInclude Include="src\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -576,6 +582,8 @@
     <None Include="includes\glm\gtx\vector_angle.inl" />
     <None Include="includes\glm\gtx\vector_query.inl" />
     <None Include="includes\glm\gtx\wrap.inl" />
+    <None Include="src\OpenGL\Shaders\fragmentShader.glsl" />
+    <None Include="src\OpenGL\Shaders\vertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
