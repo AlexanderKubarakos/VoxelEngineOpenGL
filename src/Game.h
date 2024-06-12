@@ -9,5 +9,5 @@ public:
 
 private:
 	bool mRunning = true;
-	Window window {400, 400, "MyGame"};
+	Window window {800, 800, "MyGame"};
 };

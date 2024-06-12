@@ -9,7 +9,7 @@ Window::Window(int tW, int tH, const char* tName) : mWidth(tW), mHeight(tH)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    mWindow = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr);
+    mWindow = glfwCreateWindow(mWidth, mHeight, tName, nullptr, nullptr);
     if (mWindow == nullptr)
     {
         std::cout << "Failed to create GLFW window\n";
