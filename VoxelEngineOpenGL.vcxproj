@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="includes\glm\detail\glm.cpp" />
     <ClCompile Include="includes\glm\glm.cppm" />
+    <ClCompile Include="src\Chunk.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
@@ -437,6 +438,7 @@
     <ClInclude Include="includes\glm\vec4.hpp" />
     <ClInclude Include="includes\glm\vector_relational.hpp" />
     <ClInclude Include="includes\KHR\khrplatform.h" />
+    <ClInclude Include="src\Chunk.hpp" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\OpenGL\Shaders\Shader.h" />
     <ClInclude Include="src\OpenGL\VAO.h" />

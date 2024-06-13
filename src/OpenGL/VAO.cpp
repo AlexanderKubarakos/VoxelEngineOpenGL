@@ -1,5 +1,16 @@
 #include "VAO.h"
 
+#include <cassert>
+#include <glad/glad.h>
+
+#ifdef _DEBUG
+#define BindCheck() \
+	int i; \
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &i); \
+	assert(i == static_cast<int>(mID));
+#else
+#define BindCheck() 
+#endif
 
 VAO::VAO()
 {
@@ -16,9 +27,10 @@ void VAO::Bind()
     glBindVertexArray(mID);
 }
 
-void VAO::AddAttribute(unsigned int tIndex, int tSize, GLenum tType, GLboolean tNormalized, GLsizei tStride, unsigned int tOffsetPointer)
+void VAO::AddAttribute(unsigned int tIndex, int tSize, GLenum tType, GLboolean tNormalized)
 {
-    Bind();
-    glVertexAttribPointer(tIndex, tSize, tType, tNormalized, tStride, reinterpret_cast<void*>(tOffsetPointer));
-    glEnableVertexAttribArray(0);  
+    BindCheck()
+    glEnableVertexAttribArray(tIndex);
+    glVertexAttribFormat(tIndex, tSize, tType, tNormalized, 0);
+    glVertexAttribBinding(tIndex, tIndex);
 }

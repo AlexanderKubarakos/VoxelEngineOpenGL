@@ -20,6 +20,5 @@ public:
 	void SetFloat(const std::string& uniform, float value) const;
 	void SetMatrix4f(const std::string& uniform, glm::mat4& matrix);
 
-	private:
 	void Use() const;
 };

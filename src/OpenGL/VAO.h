@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 
+#include "VBO.h"
+
 class VAO
 {
 public:
@@ -14,7 +16,9 @@ public:
     VAO& operator=(VAO&& other) noexcept = delete;
 
     void Bind();
-    void AddAttribute(unsigned int tIndex, int tSize, GLenum tType, GLboolean tNormalized, GLsizei tStride, unsigned int tOffsetPointer);
+    void AddAttribute(unsigned int tIndex, int tSize, GLenum tType, GLboolean tNormalized);
 private:
+
+    friend VBO;
     unsigned int mID{ 0 };
 };
