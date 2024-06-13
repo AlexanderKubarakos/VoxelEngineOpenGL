@@ -16,7 +16,7 @@ public:
     VAO& operator=(VAO&& other) noexcept = delete;
 
     void Bind();
-    void AddAttribute(unsigned int tIndex, int tSize, GLenum tType, GLboolean tNormalized);
+    void AddAttribute(unsigned int tAttributeIndex, unsigned int tBindingIndex, int tSize, GLenum tType, GLboolean tNormalized);
 private:
 
     friend VBO;

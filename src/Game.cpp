@@ -20,7 +20,7 @@ void Game::Run()
 	VBO vbo;
 
 	vao.Bind();
-	vao.AddAttribute(0, 3, GL_FLOAT, GL_FALSE);
+	vao.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE);
 
 	vbo.Bind();
 	vbo.SetBufferData(vertices);
