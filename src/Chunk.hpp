@@ -9,8 +9,8 @@ public:
 	void DrawChunk(); // binds its VBO, and 
 private:
 	// maybe use enum for material list
-	std::array<int, 4096> mBlockData;
-	VBO mMeshData;
+	std::array<int, 4096> m_BlockData;
+	VBO m_MeshData;
 };
 
 // Hold data

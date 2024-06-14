@@ -1,36 +1,30 @@
 #include "VAO.h"
 
-#include <cassert>
 #include <glad/glad.h>
-
-#ifdef _DEBUG
-#define BindCheck() \
-	int i; \
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &i); \
-	assert(i == static_cast<int>(mID));
-#else
-#define BindCheck() 
-#endif
 
 VAO::VAO()
 {
-    glGenVertexArrays(1, &mID);
+    glCreateVertexArrays(1, &m_Id);
 }
 
 VAO::~VAO()
 {
-    glDeleteVertexArrays(1, &mID);
+    glDeleteVertexArrays(1, &m_Id);
 }
 
 void VAO::Bind()
 {   
-    glBindVertexArray(mID);
+    glBindVertexArray(m_Id);
 }
 
-void VAO::AddAttribute(unsigned int tAttributeIndex, unsigned int tBindingIndex, int tSize, GLenum tType, GLboolean tNormalized)
+void VAO::AddAttribute(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, GLboolean t_Normalized)
 {
-    BindCheck()
-    glEnableVertexAttribArray(tAttributeIndex);
-    glVertexAttribFormat(tAttributeIndex, tSize, tType, tNormalized, 0);
-    glVertexAttribBinding(tAttributeIndex, tBindingIndex);
+    glEnableVertexArrayAttrib(m_Id, t_AttributeIndex);
+    glVertexArrayAttribFormat(m_Id, t_AttributeIndex, t_Size, t_Type, t_Normalized, 0);
+    glVertexArrayAttribBinding(m_Id, t_AttributeIndex, t_BindingIndex);
+}
+
+void VAO::BindVertexBuffer(VBO& t_VBO, unsigned int t_BindIndex, unsigned int t_Offset, int t_Stride)
+{
+    glVertexArrayVertexBuffer(m_Id, t_BindIndex, t_VBO.GetID(), t_Offset, t_Stride);
 }

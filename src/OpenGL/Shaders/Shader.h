@@ -11,9 +11,9 @@
 class Shader
 {
 public:
-	unsigned int mID;
+	unsigned int m_Id;
 
-	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* t_VertexPath, const char* t_FragmentPath);
 
 	void SetBool(const std::string& uniform, bool value) const;
 	void SetInt(const std::string& uniform, int value) const;

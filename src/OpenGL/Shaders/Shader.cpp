@@ -6,7 +6,7 @@
 
 #include "glm/gtc/type_ptr.hpp"
 
-Shader::Shader(const char* tVertexPath, const char* tFragmentPath)
+Shader::Shader(const char* t_VertexPath, const char* t_FragmentPath)
 {
 	// Crash info if shader doesn't compile
 	int  success;
@@ -23,8 +23,8 @@ Shader::Shader(const char* tVertexPath, const char* tFragmentPath)
 	try
 	{
 		// open files
-		vShaderFile.open(tVertexPath);
-		fShaderFile.open(tFragmentPath);
+		vShaderFile.open(t_VertexPath);
+		fShaderFile.open(t_FragmentPath);
 		std::stringstream vShaderStream, fShaderStream;
 		// read file's buffer contents into streams
 		vShaderStream << vShaderFile.rdbuf();
@@ -44,7 +44,7 @@ Shader::Shader(const char* tVertexPath, const char* tFragmentPath)
 	const char* vShaderCode = vertexCode.c_str();
 	const char* fShaderCode = fragmentCode.c_str();
 
-	// create new vertex shader, like all openGL objects it's refers to by an mID
+	// create new vertex shader, like all openGL objects it's refers to by an m_Id
 	unsigned int vertexShader;
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
@@ -75,42 +75,42 @@ Shader::Shader(const char* tVertexPath, const char* tFragmentPath)
 	}
 
 	// A shader program amalgamates shaders and is the thing we use for render calls, aka manages our shaders
-	mID = glCreateProgram();
+	m_Id = glCreateProgram();
 
 	// Attach our shaders, linking them allows them to run on the current shader, ie. vertex shader
-	glAttachShader(mID, vertexShader);
-	glAttachShader(mID, fragmentShader);
-	glLinkProgram(mID);
+	glAttachShader(m_Id, vertexShader);
+	glAttachShader(m_Id, fragmentShader);
+	glLinkProgram(m_Id);
 
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
 	// Print error on failure
-	glGetProgramiv(mID, GL_LINK_STATUS, &success);
+	glGetProgramiv(m_Id, GL_LINK_STATUS, &success);
 	if (!success) {
-		glGetProgramInfoLog(mID, 512, nullptr, infoLog);
+		glGetProgramInfoLog(m_Id, 512, nullptr, infoLog);
 		std::cout << "ERROR::SHADER::PROGRAM::LINK_FAILED\n" << infoLog << '\n';
 	}
 }
 
 void Shader::Use() const
 {
-	glUseProgram(mID);
+	glUseProgram(m_Id);
 }
 
 void Shader::SetBool(const std::string& uniform, bool value) const
 {
-	glUniform1i(glGetUniformLocation(mID, uniform.c_str()), (int)value);
+	glUniform1i(glGetUniformLocation(m_Id, uniform.c_str()), (int)value);
 }
 void Shader::SetInt(const std::string& uniform, int value) const
 {
-	glUniform1i(glGetUniformLocation(mID, uniform.c_str()), value);
+	glUniform1i(glGetUniformLocation(m_Id, uniform.c_str()), value);
 }
 void Shader::SetFloat(const std::string& uniform, float value) const
 {
-	glUniform1f(glGetUniformLocation(mID, uniform.c_str()), value);
+	glUniform1f(glGetUniformLocation(m_Id, uniform.c_str()), value);
 }
 void Shader::SetMatrix4f(const std::string& uniform, glm::mat4& matrix)
 {
-	glUniformMatrix4fv(glGetUniformLocation(mID, uniform.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
+	glUniformMatrix4fv(glGetUniformLocation(m_Id, uniform.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
 }

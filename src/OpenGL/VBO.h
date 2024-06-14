@@ -13,9 +13,8 @@ public:
     VBO& operator=(const VBO& other) = delete;
     VBO& operator=(VBO&& other) noexcept = delete;
 
-    void Bind();
-    void BindBuffer(unsigned int tBindIndex, unsigned int tOffset, int tStride);
-    void SetBufferData(const std::vector<float>& tVertices);
+    void SetBufferData(const std::vector<float>& t_Vertices);
+    unsigned int GetID() const { return m_Id; }
 private:
-    unsigned int mID{ 0 };
+    unsigned int m_Id{ 0 };
 };

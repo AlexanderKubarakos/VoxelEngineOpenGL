@@ -10,7 +10,7 @@ public:
 	void Stop();
 
 private:
-	bool mRunning = true;
-	Window mWindow {800, 800, "MyGame"};
-	Shader mShader {"src/OpenGL/Shaders/vertexShader.glsl", "src/OpenGL/Shaders/fragmentShader.glsl"};
+	bool m_Running = true;
+	Window m_Window {800, 800, "MyGame"};
+	Shader m_Shader {"src/OpenGL/Shaders/vertexShader.glsl", "src/OpenGL/Shaders/fragmentShader.glsl"};
 };

@@ -4,7 +4,7 @@
 
 void Game::Stop()
 {
-	mRunning = false;
+	m_Running = false;
 }
 
 void Game::Run()
@@ -16,28 +16,26 @@ void Game::Run()
 	 0.0f,  0.5f, 0.0f
 	};
 
-	VAO vao;
+	VAO chunkVAO;
 	VBO vbo;
 
-	vao.Bind();
-	vao.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE);
-
-	vbo.Bind();
 	vbo.SetBufferData(vertices);
-	vbo.BindBuffer(0, 0, 3 * sizeof(float));
+	chunkVAO.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE); // Position Attribute
+	chunkVAO.BindVertexBuffer(vbo, 0, 0, 3 * sizeof(float));
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-	while (mRunning)
+	while (m_Running)
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		mShader.Use();
+		m_Shader.Use();
+		chunkVAO.Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
-		glfwSwapBuffers(mWindow.GetWindowPointer());
+		glfwSwapBuffers(m_Window.GetWindowPointer());
 		glfwPollEvents();
-		if (mWindow.ShouldWindowClose())
+		if (m_Window.ShouldWindowClose())
 		{
 			Stop();
 		}
