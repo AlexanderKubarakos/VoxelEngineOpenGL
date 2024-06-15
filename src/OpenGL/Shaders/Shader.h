@@ -11,8 +11,6 @@
 class Shader
 {
 public:
-	unsigned int m_Id;
-
 	Shader(const char* t_VertexPath, const char* t_FragmentPath);
 
 	void SetBool(const std::string& uniform, bool value) const;
@@ -21,4 +19,6 @@ public:
 	void SetMatrix4f(const std::string& uniform, glm::mat4& matrix);
 
 	void Use() const;
+private:
+	unsigned int m_Id;
 };

@@ -440,6 +440,7 @@
     <ClInclude Include="includes\KHR\khrplatform.h" />
     <ClInclude Include="src\Chunk.hpp" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\OpenGL\camera.hpp" />
     <ClInclude Include="src\OpenGL\Shaders\Shader.h" />
     <ClInclude Include="src\OpenGL\VAO.h" />
     <ClInclude Include="src\OpenGL\VBO.h" />

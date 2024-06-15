@@ -3,6 +3,9 @@
 
 #include "OpenGL/Shaders/Shader.h"
 
+#define WIDTH 800
+#define HEIGHT 800
+
 class Game
 {
 public:
@@ -11,6 +14,6 @@ public:
 
 private:
 	bool m_Running = true;
-	Window m_Window {800, 800, "MyGame"};
+	Window m_Window { WIDTH, HEIGHT, "MyGame"};
 	Shader m_Shader {"src/OpenGL/Shaders/vertexShader.glsl", "src/OpenGL/Shaders/fragmentShader.glsl"};
 };

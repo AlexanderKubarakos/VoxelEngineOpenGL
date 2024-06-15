@@ -24,7 +24,7 @@ void VAO::AddAttribute(unsigned int t_AttributeIndex, unsigned int t_BindingInde
     glVertexArrayAttribBinding(m_Id, t_AttributeIndex, t_BindingIndex);
 }
 
-void VAO::BindVertexBuffer(VBO& t_VBO, unsigned int t_BindIndex, unsigned int t_Offset, int t_Stride)
+void VAO::BindVertexBuffer(VBO& t_VBO, unsigned int t_BindingIndex, unsigned int t_Offset, int t_Stride)
 {
-    glVertexArrayVertexBuffer(m_Id, t_BindIndex, t_VBO.GetID(), t_Offset, t_Stride);
+    glVertexArrayVertexBuffer(m_Id, t_BindingIndex, t_VBO.GetID(), t_Offset, t_Stride);
 }
