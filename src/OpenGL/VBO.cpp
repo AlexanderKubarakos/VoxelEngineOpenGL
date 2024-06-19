@@ -1,7 +1,5 @@
 #include "VBO.h"
 
-#include <glad/glad.h>
-
 VBO::VBO()
 {
     glCreateBuffers(1, &m_Id);
