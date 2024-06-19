@@ -52,7 +52,14 @@ void Input::MouseCallback(GLFWwindow* window, double xposIn, double yposIn)
     lastY = ypos;
 }
 
-void Input::ResetMouseDifference()
+void Input::ResetInputs()
 {
     mouseDifference = {0,0};
+    for (auto& keyState : keyStates)
+    {
+	    if (keyState == PRESSED)
+	    {
+		    keyState = DOWN;
+	    }
+    }
 }

@@ -8,8 +8,8 @@ namespace Input
 	enum KeyState
 	{
 		UP = 0,// Key is not depressed
-		DOWN = 1, // Key is held down
-		PRESSED = 2 // Key is held down AND it was just pressed
+		PRESSED = 1, // Key is held down AND it was just pressed
+		DOWN = 2 // Key is held down
 	};
 
 	glm::vec2 GetMouseOffset();
@@ -19,5 +19,5 @@ namespace Input
 
 	void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void MouseCallback(GLFWwindow* window, double xposIn, double yposIn);
-	void ResetMouseDifference();
+	void ResetInputs();
 }

@@ -55,7 +55,7 @@ void Game::Run()
 		chunk.RenderChunk(chunkVAO);
 
         // End of frame
-        Input::ResetMouseDifference(); // set mouse movement difference to {0,0}
+        Input::ResetInputs(); // Resets all need inputs
 		glfwSwapBuffers(m_Window.GetWindowPointer()); // Swap buffers
         glfwPollEvents(); // Poll events
 		if (m_Window.ShouldWindowClose()) // Close game if needed
