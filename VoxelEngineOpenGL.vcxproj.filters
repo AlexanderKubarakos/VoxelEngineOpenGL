@@ -45,6 +45,12 @@
     <ClCompile Include="src\Chunk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\glfw3.lib" />
@@ -945,6 +951,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\OpenGL\camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utilities.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Input.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
