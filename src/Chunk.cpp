@@ -1,5 +1,22 @@
 #include "Chunk.hpp"
 
+Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
+{
+	for (int x = 0; x < 16; x++)
+	{
+		for (int y = 0; y < 16; y++)
+		{
+			for (int z = 0; z < 16; z++)
+			{
+				if (rand() % 10 < 1)
+				{
+					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
+				}
+			}
+		}
+	}
+}
+
 void Chunk::RenderChunk(VAO& t_ChunkVAO)
 {
 	if (m_MeshLength == 0)
@@ -66,17 +83,15 @@ void Chunk::MeshChunk()
 		{
 			for (int z = 0; z < 16; z++)
 			{
-				if(rand() % 100 < 10)
+				if(m_BlockData[x + 16 * y + z * 16 * 16] == 1)
 				{
-					auto newCube = cube;
-					for (size_t i = 0; i < newCube.size(); i++)
+					// make this a stack allocation
+					std::vector<float> newCube = cube;
+					for (size_t i = 0; i < newCube.size(); i+=3)
 					{
-						if (i % 3 == 0)
-							newCube[i] += x;
-						else if (i % 3 == 1)
-							newCube[i] += y;
-						else
-							newCube[i] += z;
+						newCube[i] += x + m_ChunkPosition.x * 16;
+						newCube[i+1] += y + m_ChunkPosition.y * 16;
+						newCube[i+2] += z + m_ChunkPosition.z * 16;
 					}
 					vertices.insert(vertices.cend(), newCube.begin(), newCube.end());
 				}

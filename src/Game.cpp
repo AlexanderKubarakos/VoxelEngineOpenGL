@@ -1,5 +1,7 @@
 #include "Game.h"
 
+#include <iostream>
+
 #include "OpenGL/VAO.h"
 #include "Chunk.hpp"
 #include <glm/glm.hpp>
@@ -16,8 +18,19 @@ void Game::Run()
 	
 	chunkVAO.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE); // Position Attribute
 
-	Chunk chunk;
-	chunk.MeshChunk();
+	std::vector<Chunk> chunks;
+
+	for (int x = -1; x <= 1; x++)
+	{
+		for (int y = -1; y <= 1; y++)
+		{
+			for (int z = -1; z <= 1; z++)
+			{
+				chunks.emplace_back(glm::vec3(x,y,z));
+				chunks.back().MeshChunk();
+			}
+		}
+	}
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
@@ -52,13 +65,16 @@ void Game::Run()
 		m_Shader.SetMatrix4f("MVP", MVP);
 		chunkVAO.Bind();
 		// Draw chunks here
-		chunk.RenderChunk(chunkVAO);
+		for (Chunk& chunk : chunks)
+		{
+			chunk.RenderChunk(chunkVAO);
+		}
 
         // End of frame
         Input::ResetInputs(); // Resets all need inputs
 		glfwSwapBuffers(m_Window.GetWindowPointer()); // Swap buffers
         glfwPollEvents(); // Poll events
-		if (m_Window.ShouldWindowClose()) // Close game if needed
+		if (m_Window.ShouldWindowClose() || Input::IsKeyDown(GLFW_KEY_ESCAPE)) // Close game if needed
 		{
 			Stop();
 		}

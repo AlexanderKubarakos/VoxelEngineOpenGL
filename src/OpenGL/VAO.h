@@ -20,7 +20,5 @@ public:
     void BindVertexBuffer(VBO& t_VBO, unsigned int t_BindingIndex, unsigned int t_Offset, int t_Stride);
     unsigned int GetID() const { return m_Id; }
 private:
-
-    friend VBO;
     unsigned int m_Id{ 0 };
 };
