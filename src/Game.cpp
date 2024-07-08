@@ -7,9 +7,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
 void Game::Stop()
 {
 	m_Running = false;
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void Game::Run()
@@ -32,6 +39,12 @@ void Game::Run()
 		}
 	}
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+	ImGui_ImplOpenGL3_Init();
+
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
 	while (m_Running)
@@ -39,9 +52,17 @@ void Game::Run()
         // Start Frame
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear buffers
         Utilities::ProcessFrame(m_Window.GetWindowPointer()); // Do start of frame actions, ex. calculate delta time
-        m_Camera.ProcessInput();
+
+		// ImGUI start of frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGui::ShowDemoWindow(); // Show demo window! :)
+
+		// Swap wireframe
 		if (Input::IsKeyPressed(GLFW_KEY_X))
 		{
+			wireframe = !wireframe;
 			if (wireframe)
 			{
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -50,12 +71,12 @@ void Game::Run()
 			{
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			}
-			wireframe = !wireframe;
 		}
 
+		m_Camera.ProcessInput();
 
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH) / HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH) / HEIGHT, 0.1f, 250.0f);
 
         model = glm::translate(model, { 0, 0, -5 });
 
@@ -71,7 +92,12 @@ void Game::Run()
 		}
 
         // End of frame
-        Input::ResetInputs(); // Resets all need inputs
+        Input::ResetInputs(m_Window); // Resets all need inputs
+
+		// ImGUI rendering end of frame
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		glfwSwapBuffers(m_Window.GetWindowPointer()); // Swap buffers
         glfwPollEvents(); // Poll events
 		if (m_Window.ShouldWindowClose() || Input::IsKeyDown(GLFW_KEY_ESCAPE)) // Close game if needed

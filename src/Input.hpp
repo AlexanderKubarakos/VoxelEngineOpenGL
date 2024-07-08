@@ -1,4 +1,6 @@
 #pragma once
+#include "Window.hpp"
+
 #include "GLFW/glfw3.h"
 
 #include "glm/glm.hpp"
@@ -19,5 +21,5 @@ namespace Input
 
 	void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void MouseCallback(GLFWwindow* window, double xposIn, double yposIn);
-	void ResetInputs();
+	void ResetInputs(Window& t_Window);
 }

@@ -4,8 +4,8 @@
 #include "OpenGL/camera.hpp"
 #include "OpenGL/Shaders/Shader.h"
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 1200
+#define HEIGHT 1200
 
 class Game
 {
