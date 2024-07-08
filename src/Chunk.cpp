@@ -1,5 +1,7 @@
 #include "Chunk.hpp"
 
+#include <iostream>
+
 Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
 {
 	for (int x = 0; x < 16; x++)
@@ -8,22 +10,20 @@ Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
 		{
 			for (int z = 0; z < 16; z++)
 			{
-				if (rand() % 10 < 1)
-				{
-					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
-				}
+				m_BlockData[x + 16 * y + z * 16 * 16] = 1;
 			}
 		}
 	}
 }
 
-void Chunk::RenderChunk(VAO& t_ChunkVAO)
+void Chunk::RenderChunk(VAO& t_ChunkVAO, Shader& t_Shader)
 {
 	if (m_MeshLength == 0)
 	{
 		return;
 	}
 
+	t_Shader.SetVec3("ChunkPosition", m_ChunkPosition);
 	t_ChunkVAO.BindVertexBuffer(m_MeshData, 0, 0, 3 * sizeof(float));
 	glDrawArrays(GL_TRIANGLES, 0, m_MeshLength);
 }
@@ -83,17 +83,139 @@ void Chunk::MeshChunk()
 		{
 			for (int z = 0; z < 16; z++)
 			{
-				if(m_BlockData[x + 16 * y + z * 16 * 16] == 1)
+				// if voxel exists
+				if (m_BlockData[x + 16 * y + z * 16 * 16] > 0)
 				{
-					// make this a stack allocation
-					std::vector<float> newCube = cube;
-					for (size_t i = 0; i < newCube.size(); i+=3)
+					std::vector<float> newCube (cube.size());
+
+					const float xf = static_cast<float>(x);
+					const float yf = static_cast<float>(y);
+					const float zf = static_cast<float>(z);
+
+					// check neighbor voxels if empty we need to add our side
+					// East (+x)
+					if (x == 15 || m_BlockData[(x + 1) + 16 * y + z * 16 * 16] == 0)
 					{
-						newCube[i] += x + m_ChunkPosition.x * 16;
-						newCube[i+1] += y + m_ChunkPosition.y * 16;
-						newCube[i+2] += z + m_ChunkPosition.z * 16;
+						 float side[] = {
+						 0.5f,  0.5f,  0.5f,
+						 0.5f,  0.5f, -0.5f,
+						 0.5f, -0.5f, -0.5f,
+						 0.5f, -0.5f, -0.5f,
+						 0.5f, -0.5f,  0.5f,
+						 0.5f,  0.5f,  0.5f };
+
+						for (int i = 0; i < 18; i+=3)
+						{
+							side[i] += xf;
+							side[i + 1] += yf;
+							side[i + 2] += zf;
+						}
+
+						newCube.insert(newCube.end(), &side[0], &side[sizeof(side) / sizeof(float)]);
 					}
-					vertices.insert(vertices.cend(), newCube.begin(), newCube.end());
+
+					// West (-x)
+					if (x == 0 || m_BlockData[(x - 1) + 16 * y + z * 16 * 16] == 0)
+					{
+						float side[] = {
+						-0.5f,  0.5f,  0.5f,
+						-0.5f,  0.5f, -0.5f,
+						-0.5f, -0.5f, -0.5f,
+						-0.5f, -0.5f, -0.5f,
+						-0.5f, -0.5f,  0.5f,
+						-0.5f,  0.5f,  0.5f };
+
+						for (int i = 0; i < 18; i += 3)
+						{
+							side[i] += xf;
+							side[i + 1] += yf;
+							side[i + 2] += zf;
+						}
+
+						newCube.insert(newCube.end(), &side[0], &side[sizeof(side) / sizeof(float)]);
+					}
+
+					// Up (+y)
+					if (y == 15 || m_BlockData[x + 16 * (y + 1) + z * 16 * 16] == 0)
+					{
+						float side[] = {
+						 -0.5f,  0.5f, -0.5f,
+						 0.5f,  0.5f, -0.5f,
+						 0.5f,  0.5f,  0.5f,
+						 0.5f,  0.5f,  0.5f,
+						-0.5f,  0.5f,  0.5f,
+						-0.5f,  0.5f, -0.5f };
+
+						for (int i = 0; i < 18; i += 3)
+						{
+							side[i] += xf;
+							side[i + 1] += yf;
+							side[i + 2] += zf;
+						}
+						newCube.insert(newCube.end(), &side[0], &side[sizeof(side) / sizeof(float)]);
+					}
+
+					// Down (-y)
+					if (y == 0 || m_BlockData[x + 16 * (y - 1) + z * 16 * 16] == 0)
+					{
+						float side[] = {
+						-0.5f, -0.5f, -0.5f,
+						 0.5f, -0.5f, -0.5f,
+						 0.5f, -0.5f,  0.5f,
+						 0.5f, -0.5f,  0.5f,
+						-0.5f, -0.5f,  0.5f,
+						-0.5f, -0.5f, -0.5f };
+
+						for (int i = 0; i < 18; i += 3)
+						{
+							side[i] += xf;
+							side[i + 1] += yf;
+							side[i + 2] += zf;
+						}
+						newCube.insert(newCube.end(), &side[0], &side[sizeof(side) / sizeof(float)]);
+					}
+
+					// South (+z)
+					if (z == 15 || m_BlockData[x + 16 * y + (z + 1) * 16 * 16] == 0)
+					{
+						float side[] = {
+						 -0.5f, -0.5f,  0.5f,
+						 0.5f, -0.5f,  0.5f,
+						 0.5f,  0.5f,  0.5f,
+						 0.5f,  0.5f,  0.5f,
+						-0.5f,  0.5f,  0.5f,
+						-0.5f, -0.5f,  0.5f };
+
+						for (int i = 0; i < 18; i += 3)
+						{
+							side[i] += xf;
+							side[i + 1] += yf;
+							side[i + 2] += zf;
+						}
+						newCube.insert(newCube.end(), &side[0], &side[sizeof(side) / sizeof(float)]);
+					}
+
+					// North (-z)
+					if (z == 0 || m_BlockData[x + 16 * y + (z - 1) * 16 * 16] == 0)
+					{
+						float side[] = {
+						-0.5f, -0.5f, -0.5f + zf,
+						 0.5f, -0.5f, -0.5f + zf,
+						 0.5f,  0.5f, -0.5f + zf,
+						 0.5f,  0.5f, -0.5f + zf,
+						-0.5f,  0.5f, -0.5f + zf,
+						-0.5f, -0.5f, -0.5f + zf };
+
+						for (int i = 0; i < 18; i += 3)
+						{
+							side[i] += xf;
+							side[i + 1] += yf;
+							side[i + 2] += zf;
+						}
+						newCube.insert(newCube.end(), &side[0], &side[sizeof(side) / sizeof(float)]);
+					}
+
+					vertices.insert(vertices.end(), newCube.begin(), newCube.end());
 				}
 			}
 		}

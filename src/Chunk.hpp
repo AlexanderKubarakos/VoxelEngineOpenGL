@@ -8,12 +8,14 @@
 
 #include "glm/vec3.hpp"
 
+#include "OpenGL/Shaders/Shader.h"
+
 class Chunk
 {
 public:
 	Chunk(glm::vec3 t_ChunkPosition);
 
-	void RenderChunk(VAO& t_ChunkVAO); // binds its VBO, and
+	void RenderChunk(VAO& t_ChunkVAO, Shader& t_Shader); // binds its VBO, and
 	void MeshChunk();
 	void SetChunkNeighbor(Utilities::DIRECTION t_Direction, Chunk* t_Neighbor);
 

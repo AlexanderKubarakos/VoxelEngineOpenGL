@@ -62,15 +62,11 @@ void Game::Run()
 		// Swap wireframe
 		if (Input::IsKeyPressed(GLFW_KEY_X))
 		{
-			wireframe = !wireframe;
 			if (wireframe)
-			{
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			}
 			else
-			{
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			}
+			wireframe = !wireframe;
 		}
 
 		m_Camera.ProcessInput();
@@ -88,7 +84,7 @@ void Game::Run()
 		// Draw chunks here
 		for (Chunk& chunk : chunks)
 		{
-			chunk.RenderChunk(chunkVAO);
+			chunk.RenderChunk(chunkVAO, m_Shader);
 		}
 
         // End of frame
