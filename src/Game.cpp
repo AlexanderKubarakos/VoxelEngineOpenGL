@@ -41,6 +41,7 @@ void Game::Run()
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
 
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
 	ImGui_ImplOpenGL3_Init();
@@ -57,8 +58,11 @@ void Game::Run()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		ImGui::ShowDemoWindow(); // Show demo window! :)
 
+		ImGui::Begin("Debug");
+		ImGui::Text("Delta Time: %fms", Utilities::GetDeltaTime() * 1000);
+		ImGui::Text("FPS: %.2f", 1 / Utilities::GetDeltaTime());
+		ImGui::End();
 		// Swap wireframe
 		if (Input::IsKeyPressed(GLFW_KEY_X))
 		{
