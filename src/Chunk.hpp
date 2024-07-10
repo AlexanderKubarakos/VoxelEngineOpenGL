@@ -6,7 +6,7 @@
 
 #include "Utilities.hpp"
 
-#include "glm/vec3.hpp"
+#include "glm/glm.hpp"
 
 #include "OpenGL/Shaders/Shader.h"
 
@@ -43,7 +43,8 @@ public:
 		m_MeshData = std::move(t_Other.m_MeshData);
 		return *this;
 	}
-
+	// TODO: make private, public just for testing...
+	void GreedyMesh();
 private:
 	// maybe use enum for material list
 	std::array<int, 4096> m_BlockData{};
@@ -52,6 +53,8 @@ private:
 	glm::vec3 m_ChunkPosition;
 	int m_MeshLength{0};
 	VBO m_MeshData{};
+
+	
 };
 
 // Hold data

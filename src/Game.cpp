@@ -23,21 +23,26 @@ void Game::Run()
 {
 	VAO chunkVAO;
 	
-	chunkVAO.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE); // Position Attribute
+	chunkVAO.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE, 0); // Position Attribute
+	chunkVAO.AddAttribute(1, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3); // Position Attribute
 
 	std::vector<Chunk> chunks;
 
-	for (int x = -1; x <= 1; x++)
+	for (int x = -1; x <= 0; x++)
 	{
-		for (int y = -1; y <= 1; y++)
+		for (int y = -1; y <= 0; y++)
 		{
-			for (int z = -1; z <= 1; z++)
+			for (int z = -1; z <= 0; z++)
 			{
-				chunks.emplace_back(glm::vec3(x,y,z));
-				chunks.back().MeshChunk();
+				//chunks.emplace_back(glm::vec3(x,y,z));
+				//chunks.back().MeshChunk();
 			}
 		}
 	}
+
+	chunks.emplace_back(glm::vec3(0,0,0));
+	chunks.back().MeshChunk();
+	chunks.back().GreedyMesh();
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -73,12 +78,15 @@ void Game::Run()
 			wireframe = !wireframe;
 		}
 
+		if (Input::IsKeyPressed(GLFW_KEY_H))
+			chunks.back().MeshChunk();
+		if (Input::IsKeyPressed(GLFW_KEY_J))
+			chunks.back().GreedyMesh();
+
 		m_Camera.ProcessInput();
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH) / HEIGHT, 0.1f, 250.0f);
-
-        model = glm::translate(model, { 0, 0, -5 });
 
         glm::mat4 MVP = projection * m_Camera.GetViewMatrix() * model;
 

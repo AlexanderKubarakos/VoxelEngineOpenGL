@@ -17,5 +17,5 @@ private:
 	bool m_Running = true;
 	Window m_Window { WIDTH, HEIGHT, "MyGame"};
 	Shader m_Shader {"src/OpenGL/Shaders/vertexShader.glsl", "src/OpenGL/Shaders/fragmentShader.glsl"};
-	Camera m_Camera {{0,0,0}};
+	Camera m_Camera {{0,0,64}};
 };

@@ -17,10 +17,10 @@ void VAO::Bind()
     glBindVertexArray(m_Id);
 }
 
-void VAO::AddAttribute(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, GLboolean t_Normalized)
+void VAO::AddAttribute(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, GLboolean t_Normalized, int t_RelativeOffset)
 {
     glEnableVertexArrayAttrib(m_Id, t_AttributeIndex);
-    glVertexArrayAttribFormat(m_Id, t_AttributeIndex, t_Size, t_Type, t_Normalized, 0);
+    glVertexArrayAttribFormat(m_Id, t_AttributeIndex, t_Size, t_Type, t_Normalized, t_RelativeOffset);
     glVertexArrayAttribBinding(m_Id, t_AttributeIndex, t_BindingIndex);
 }
 
