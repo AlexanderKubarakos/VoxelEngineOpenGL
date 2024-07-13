@@ -67,7 +67,7 @@ void Game::Run()
 		ImGui::Begin("Debug");
 		ImGui::Text("Delta Time: %fms", Utilities::GetDeltaTime() * 1000);
 		ImGui::Text("FPS: %.2f", 1 / Utilities::GetDeltaTime());
-		ImGui::End();
+		
 		// Swap wireframe
 		if (Input::IsKeyPressed(GLFW_KEY_X))
 		{
@@ -103,6 +103,7 @@ void Game::Run()
         Input::ResetInputs(m_Window); // Resets all need inputs
 
 		// ImGUI rendering end of frame
+		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

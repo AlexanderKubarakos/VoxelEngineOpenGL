@@ -28,6 +28,7 @@ Window::Window(int t_W, int t_H, const char* t_Name) : m_Width(t_W), m_Height(t_
 
     glViewport(0, 0, m_Width, m_Height);
     glEnable(GL_DEPTH_TEST);
+    glfwSwapInterval(0);
 }
 
 Window::~Window()

@@ -47,7 +47,8 @@ public:
 	void GreedyMesh();
 private:
 	// maybe use enum for material list
-	std::array<int, 4096> m_BlockData{};
+	std::array<int8_t, 4096> m_BlockData{};
+	
 	std::array<Chunk*, 6> m_ChunkNeighbors{nullptr}; // maybe use a weak pointer
 
 	glm::vec3 m_ChunkPosition;
