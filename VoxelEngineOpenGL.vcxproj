@@ -122,6 +122,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\includes;$(ProjectDir)\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -148,7 +150,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\OpenGL\Shaders\Shader.cpp" />
     <ClCompile Include="src\OpenGL\VAO.cpp" />
-    <ClCompile Include="src\OpenGL\VBO.cpp" />
+    <ClCompile Include="src\OpenGL\Buffer.cpp" />
     <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -462,7 +464,7 @@
     <ClInclude Include="src\OpenGL\camera.hpp" />
     <ClInclude Include="src\OpenGL\Shaders\Shader.h" />
     <ClInclude Include="src\OpenGL\VAO.h" />
-    <ClInclude Include="src\OpenGL\VBO.h" />
+    <ClInclude Include="src\OpenGL\Buffer.h" />
     <ClInclude Include="src\Window.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -39,7 +39,7 @@
     <ClCompile Include="src\OpenGL\VAO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGL\VBO.cpp">
+    <ClCompile Include="src\OpenGL\Buffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Chunk.cpp">
@@ -965,7 +965,7 @@
     <ClInclude Include="src\OpenGL\VAO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL\VBO.h">
+    <ClInclude Include="src\OpenGL\Buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Chunk.hpp">

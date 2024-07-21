@@ -1,6 +1,6 @@
 #include "Game.h"
 
-#include <iostream>
+#include <chrono>
 
 #include "OpenGL/VAO.h"
 #include "Chunk.hpp"
@@ -19,6 +19,9 @@ void Game::Stop()
 	ImGui::DestroyContext();
 }
 
+// TODO:
+// Allow passing in a w component to change world size
+
 void Game::Run()
 {
 	VAO chunkVAO;
@@ -28,27 +31,14 @@ void Game::Run()
 
 	std::vector<Chunk> chunks;
 
-	for (int x = -1; x <= 0; x++)
-	{
-		for (int y = -1; y <= 0; y++)
-		{
-			for (int z = -1; z <= 0; z++)
-			{
-				//chunks.emplace_back(glm::vec3(x,y,z));
-				//chunks.back().MeshChunk();
-			}
-		}
-	}
-
 	chunks.emplace_back(glm::vec3(0,0,0));
 	chunks.back().MeshChunk();
-	chunks.back().GreedyMesh();
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 
-	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -77,11 +67,6 @@ void Game::Run()
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			wireframe = !wireframe;
 		}
-
-		if (Input::IsKeyPressed(GLFW_KEY_H))
-			chunks.back().MeshChunk();
-		if (Input::IsKeyPressed(GLFW_KEY_J))
-			chunks.back().GreedyMesh();
 
 		m_Camera.ProcessInput();
 
@@ -116,3 +101,5 @@ void Game::Run()
 	}
 }
 
+// TODO: add normal information
+// and add some lighting

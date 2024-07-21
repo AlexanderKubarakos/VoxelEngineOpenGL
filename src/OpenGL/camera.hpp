@@ -13,7 +13,7 @@ class Camera
 {
 public:
 	Camera(glm::vec3 t_Position, glm::vec3 t_Up = glm::vec3(0.0f, 1.0f, 0.0f), float t_Yaw = -90.0f, float t_Pitch = 0.0f)
-		: m_MoveSpeed(15.0f), m_Sensitivity(0.5f), m_CameraPos(t_Position), m_CameraFront(glm::vec3(0.0f, 0.0f, -1.0f))
+		: m_MoveSpeed(15.0f), m_Sensitivity(0.3f), m_CameraPos(t_Position), m_CameraFront(glm::vec3(0.0f, 0.0f, -1.0f))
 	, m_CameraUp(t_Up), m_Yaw(t_Yaw), m_Pitch(t_Pitch) {}
 	glm::mat4 GetViewMatrix() const { return glm::lookAt(m_CameraPos, m_CameraFront + m_CameraPos, m_CameraUp); }
 	void ProcessInput()

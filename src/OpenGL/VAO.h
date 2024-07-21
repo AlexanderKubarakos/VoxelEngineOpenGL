@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 
-#include "VBO.h"
+#include "Buffer.h"
 
 class VAO
 {
@@ -17,7 +17,8 @@ public:
 
     void Bind();
     void AddAttribute(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, GLboolean t_Normalized, int t_RelativeOffset);
-    void BindVertexBuffer(VBO& t_VBO, unsigned int t_BindingIndex, unsigned int t_Offset, int t_Stride);
+    void BindVertexBuffer(const Buffer& t_Buffer, unsigned int t_BindingIndex, unsigned int t_Offset, int t_Stride);
+    void BindElementBuffer(const Buffer& t_Buffer);
     unsigned int GetID() const { return m_Id; }
 private:
     unsigned int m_Id{ 0 };
