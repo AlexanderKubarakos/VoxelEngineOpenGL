@@ -143,6 +143,7 @@
     <ClCompile Include="includes\glm\detail\glm.cpp" />
     <ClCompile Include="includes\glm\glm.cppm" />
     <ClCompile Include="src\Chunk.cpp" />
+    <ClCompile Include="src\DrawPool.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Utilities.cpp" />
     <ClCompile Include="src\Game.cpp" />
@@ -458,6 +459,7 @@
     <ClInclude Include="includes\glm\vector_relational.hpp" />
     <ClInclude Include="includes\KHR\khrplatform.h" />
     <ClInclude Include="src\Chunk.hpp" />
+    <ClInclude Include="src\DrawPool.hpp" />
     <ClInclude Include="src\Input.hpp" />
     <ClInclude Include="src\Utilities.hpp" />
     <ClInclude Include="src\Game.h" />
@@ -465,6 +467,7 @@
     <ClInclude Include="src\OpenGL\Shaders\Shader.h" />
     <ClInclude Include="src\OpenGL\VAO.h" />
     <ClInclude Include="src\OpenGL\Buffer.h" />
+    <ClInclude Include="src\Vertex.hpp" />
     <ClInclude Include="src\Window.hpp" />
   </ItemGroup>
   <ItemGroup>

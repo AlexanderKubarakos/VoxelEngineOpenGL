@@ -5,26 +5,6 @@
 
 #include "imgui.h"
 
-struct Vertex {
-
-	float position[3];
-	float normal[3];
-	float color[4];
-
-	Vertex(glm::vec3 p, glm::vec3 n, glm::vec3 c) {
-		position[0] = p.x;
-		position[1] = p.y;
-		position[2] = p.z;
-		normal[0] = n.x;
-		normal[1] = n.y;
-		normal[2] = n.z;
-		color[0] = c.x;
-		color[1] = c.y;
-		color[2] = c.z;
-		color[3] = 1.0;
-	}
-};
-
 Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
 {
 	for (int x = 0; x < 16; x++)
@@ -42,9 +22,9 @@ Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
 	}
 }
 
-void Chunk::MeshChunk()
+void Chunk::MeshChunk(DrawPool& t_DrawPool)
 {
-	GreedyMesh();
+	GreedyMesh(t_DrawPool);
 }
 
 void Chunk::RenderChunk(VAO& t_ChunkVAO, Shader& t_Shader)
@@ -62,64 +42,51 @@ void Chunk::RenderChunk(VAO& t_ChunkVAO, Shader& t_Shader)
 	glDrawElements(GL_TRIANGLES, m_MeshLength, GL_UNSIGNED_INT, 0);
 }
 
-void Chunk::GreedyMesh()
+void Chunk::GreedyMesh(DrawPool& t_DrawPool)
 {
-	int indCount = 0;
-	float* data = new float[100000];
-	int* indices = new int[100000];
-	// These functions do not change winding order, that doesn't matter, we do our own back face culling
-	auto sideAddXY = [&indCount, indices, data](int bottomX, int bottomY, int lengthX, int lengthY, int z) mutable
+	//BUG: remember to un section old bucket, right now calking greedy mesh more than once causes memory leak
+
+	glm::vec3 color{ 0.7f, 0.3f, 0.1f };
+	glm::vec3 normal{ 1.0f, 0.0f, 0.0f };
+	std::vector<Vertex> nVerts;
+
+	auto sideAddXY = [&](int bottomX, int bottomY, int lengthX, int lengthY, int z) mutable
 		{
-			glm::vec2 bottomLeft{ static_cast<float>(bottomX), static_cast<float>(bottomY) };
-			glm::vec2 topLeft{ static_cast<float>(bottomX), static_cast<float>(bottomY + lengthY) };
-			glm::vec2 bottomRight{ static_cast<float>(bottomX + lengthX), static_cast<float>(bottomY) };
-			glm::vec2 topRight{ static_cast<float>(bottomX + lengthX), static_cast<float>(bottomY + lengthY) };
-			float fz = static_cast<float>(z);
-			float verts[] = { bottomLeft.x, bottomLeft.y, fz, 0.7f, 0.3f, 0.1f,
-			bottomRight.x, bottomRight.y, fz, 0.7f, 0.3f, 0.1f,
-			topRight.x, topRight.y, fz, 0.7f, 0.3f, 0.1f,
-			topLeft.x, topLeft.y, fz, 0.7f, 0.3f, 0.1f};
-			int offset = indCount / 6 * 4;
-			int inds[] = { offset, 3 + offset, 2 + offset, offset, 1 + offset, 2 + offset };
-			memcpy(&data[indCount / 6 * 4 * 6], verts, sizeof(verts));
-			memcpy(&indices[indCount], inds, sizeof(inds));
-			indCount += 6;
+			Vertex bottomLeft{ {static_cast<float>(bottomX), static_cast<float>(bottomY), static_cast<float>(z)}, {normal}, {color} };
+			Vertex topLeft{ {static_cast<float>(bottomX), static_cast<float>(bottomY + lengthY), static_cast<float>(z)}, {normal}, {color} };
+			Vertex bottomRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(bottomY), static_cast<float>(z)}, {normal}, {color} };
+			Vertex topRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(bottomY + lengthY), static_cast<float>(z)}, {normal}, {color} };
+
+			nVerts.push_back(bottomLeft);
+			nVerts.push_back(topLeft);
+			nVerts.push_back(bottomRight);
+			nVerts.push_back(topRight);
 		};
 
-	auto sideAddXZ = [&indCount, indices, data](int bottomX, int bottomZ, int lengthX, int lengthZ, int y) mutable
+	auto sideAddXZ = [&](int bottomX, int bottomZ, int lengthX, int lengthZ, int y) mutable
 		{
-			glm::vec2 bottomLeft{ static_cast<float>(bottomX), static_cast<float>(bottomZ) };
-			glm::vec2 topLeft{ static_cast<float>(bottomX), static_cast<float>(bottomZ + lengthZ) };
-			glm::vec2 bottomRight{ static_cast<float>(bottomX + lengthX), static_cast<float>(bottomZ) };
-			glm::vec2 topRight{ static_cast<float>(bottomX + lengthX), static_cast<float>(bottomZ + lengthZ) };
-			float fy = static_cast<float>(y);
-			float verts[] = { bottomLeft.x, fy, bottomLeft.y, 0.7f, 0.3f, 0.1f,
-			bottomRight.x, fy, bottomRight.y, 0.7f, 0.3f, 0.1f,
-			topRight.x, fy, topRight.y, 0.7f, 0.3f, 0.1f,
-			topLeft.x, fy, topLeft.y, 0.7f, 0.3f, 0.1f };
-			int offset = indCount / 6 * 4;
-			int inds[] = { offset, 3 + offset, 2 + offset, offset, 1 + offset, 2 + offset };
-			memcpy(&data[indCount / 6 * 4 * 6], verts, sizeof(verts));
-			memcpy(&indices[indCount], inds, sizeof(inds));
-			indCount += 6;
+			Vertex bottomLeft{ {static_cast<float>(bottomX), static_cast<float>(y), static_cast<float>(bottomZ)}, {normal}, {color} };
+			Vertex topLeft{ {static_cast<float>(bottomX), static_cast<float>(y), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
+			Vertex bottomRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(y), static_cast<float>(bottomZ)}, {normal}, {color} };
+			Vertex topRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(y), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
+
+			nVerts.push_back(bottomLeft);
+			nVerts.push_back(topLeft);
+			nVerts.push_back(bottomRight);
+			nVerts.push_back(topRight);
 		};
 
-	auto sideAddYZ = [&indCount, indices, data](int bottomY, int bottomZ, int lengthY, int lengthZ, int x) mutable
+	auto sideAddYZ = [&](int bottomY, int bottomZ, int lengthY, int lengthZ, int x) mutable
 		{
-			glm::vec2 bottomLeft{ static_cast<float>(bottomY), static_cast<float>(bottomZ) };
-			glm::vec2 topLeft{ static_cast<float>(bottomY), static_cast<float>(bottomZ + lengthZ) };
-			glm::vec2 bottomRight{ static_cast<float>(bottomY + lengthY), static_cast<float>(bottomZ) };
-			glm::vec2 topRight{ static_cast<float>(bottomY + lengthY), static_cast<float>(bottomZ + lengthZ) };
-			float fx = static_cast<float>(x);
-			float verts[] = { fx, bottomLeft.x, bottomLeft.y, 0.7f, 0.3f, 0.1f,
-			fx, bottomRight.x, bottomRight.y, 0.7f, 0.3f, 0.1f,
-			fx, topRight.x, topRight.y, 0.7f, 0.3f, 0.1f,
-			fx, topLeft.x, topLeft.y, 0.7f, 0.3f, 0.1f };
-			int offset = indCount / 6 * 4;
-			int inds[] = { offset, 3 + offset, 2 + offset, offset, 1 + offset, 2 + offset };
-			memcpy(&data[indCount / 6 * 4 * 6], verts, sizeof(verts));
-			memcpy(&indices[indCount], inds, sizeof(inds));
-			indCount += 6;
+			Vertex bottomLeft{ {static_cast<float>(x), static_cast<float>(bottomY), static_cast<float>(bottomZ)}, {normal}, {color} };
+			Vertex topLeft{ {static_cast<float>(x), static_cast<float>(bottomY), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
+			Vertex bottomRight{ {static_cast<float>(x), static_cast<float>(bottomY + lengthY), static_cast<float>(bottomZ)}, {normal}, {color} };
+			Vertex topRight{ {static_cast<float>(x), static_cast<float>(bottomY + lengthY), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
+
+			nVerts.push_back(bottomLeft);
+			nVerts.push_back(topLeft);
+			nVerts.push_back(bottomRight);
+			nVerts.push_back(topRight);
 		};
 
 	// xy plane, facing -layerZ
@@ -566,10 +533,11 @@ void Chunk::GreedyMesh()
 		}
 	}
 
-	// TODO: make Buffer contain its own length
-	m_VertexBuffer.SetBufferDataFloat(data, indCount / 4 * 6 * 6);
-	m_IndexBuffer.SetBufferDataInt(indices, indCount);
-	m_MeshLength = indCount;
+
+	m_BucketID = t_DrawPool.AllocateBucket(nVerts.size());
+	t_DrawPool.FillBucket(m_BucketID, nVerts);
+
+	//m_MeshLength = indCount;
 
 	delete[] data;
 }

@@ -9,24 +9,21 @@
 #include "glm/glm.hpp"
 
 #include "OpenGL/Shaders/Shader.h"
+#include "DrawPool.hpp"
 
 class Chunk
 {
 public:
 	Chunk(glm::vec3 t_ChunkPosition);
 
-	void RenderChunk(VAO& t_ChunkVAO, Shader& t_Shader); // binds its Buffer, and
-	void MeshChunk();
+	void MeshChunk(DrawPool& t_DrawPool);
 	//void SetChunkNeighbor(Utilities::DIRECTION t_Direction, Chunk* t_Neighbor);
 
 	Chunk(const Chunk& t_Other) = delete;
 	Chunk(Chunk&& t_Other) noexcept
 		: m_BlockData(std::move(t_Other.m_BlockData)),
 		  //m_ChunkNeighbors(std::move(t_Other.m_ChunkNeighbors)),
-		  m_ChunkPosition(std::move(t_Other.m_ChunkPosition)),
-		  m_MeshLength(t_Other.m_MeshLength),
-		  m_VertexBuffer(std::move(t_Other.m_VertexBuffer)),
-		  m_IndexBuffer(std::move(t_Other.m_IndexBuffer))
+		  m_ChunkPosition(std::move(t_Other.m_ChunkPosition))
 	{
 	}
 
@@ -38,9 +35,6 @@ public:
 		m_BlockData = std::move(t_Other.m_BlockData);
 		//m_ChunkNeighbors = std::move(t_Other.m_ChunkNeighbors);
 		m_ChunkPosition = std::move(t_Other.m_ChunkPosition);
-		m_MeshLength = t_Other.m_MeshLength;
-		m_VertexBuffer = std::move(t_Other.m_VertexBuffer);
-		m_IndexBuffer = std::move(t_Other.m_IndexBuffer);
 		return *this;
 	}
 
@@ -50,9 +44,8 @@ private:
 	//std::array<Chunk*, 6> m_ChunkNeighbors{nullptr}; // maybe use a weak pointer
 
 	glm::vec3 m_ChunkPosition;
-	int m_MeshLength{0};
-	Buffer m_VertexBuffer{};
-	Buffer m_IndexBuffer{};
 
-	void GreedyMesh();
+	DrawPool::BucketID m_BucketID;
+
+	void GreedyMesh(DrawPool& t_DrawPool);
 };

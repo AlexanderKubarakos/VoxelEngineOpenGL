@@ -26,10 +26,21 @@ public:
 	    return *this;
     }
 
-    void SetBufferDataFloat(const std::vector<float>& t_Data) const;
-    void SetBufferDataFloat(const float* t_Data, int t_Length) const;
-    void SetBufferDataInt(const std::vector<int>& t_Data) const;
-    void SetBufferDataInt(const int* t_Data, int t_Length) const;
+    template<typename T>
+    void SetBufferData(const std::vector<T>& t_Data, GLbitfield t_UsageFlags = GL_STATIC_DRAW) const
+    {
+        glNamedBufferData(m_Id, static_cast<GLsizeiptr>(t_Data.size() * sizeof(T)), t_Data.data(), t_UsageFlags);
+    }
+    template<typename T>
+    void SetBufferData(const T* t_Data, size_t t_Length, GLbitfield t_UsageFlags = GL_STATIC_DRAW) const
+    {
+        glNamedBufferData(m_Id, static_cast<GLsizeiptr>(t_Length * sizeof(T)), t_Data, t_UsageFlags);
+    }
+
+    void BindBuffer(GLbitfield t_BindPointFlag);
+
+    void SetupBufferStorage(size_t size, void* data, GLbitfield flags) const;
+    void* MapBufferRange(size_t offset, size_t length, GLbitfield flags) const;
     unsigned int GetID() const { return m_Id; }
 private:
     unsigned int m_Id{ 0 };
