@@ -5,15 +5,12 @@
 
 #include "imgui.h"
 
-// This draw pool expects lists of vertices, and will automatically create the correct indices for every 4 vertices to make a quad
-// aka this draw pool expects quads not triangles
-
-static glm::vec3* ptr;
-
 DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize)
 {
 	Reserve(t_BucketQuantity, t_BucketSize);
 	GenerateIndices();
+
+	std::fill(m_SideOcclusionOverride.begin(), m_SideOcclusionOverride.end(), true);
 }
 
 DrawPool::~DrawPool()
@@ -52,7 +49,7 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Util
 	Vertex* start = m_Start + m_IndirectCallList[*t_Id].m_BaseVertex;
 	memcpy(start, t_Data.data(), t_Data.size() * sizeof(Vertex));
 
-	//TODO: make sure these stay in sync
+	t_ExtraData.w = t_MeshDirection;
 	m_ExtraChunkDataList[*t_Id] = t_ExtraData;
 	m_IndirectCallList[*t_Id].m_Direction = t_MeshDirection;
 }
@@ -116,16 +113,18 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 void DrawPool::UpdateDrawCalls()
 {
 	// Sort draw calls
-
 	auto func = [&](DAIC& daic)->bool
 		{
 			return m_SideOcclusionOverride[daic.m_Direction];
 		};
 
-	size_t first = 0;
-	for (; first < m_IndirectCallList.size() && func(m_IndirectCallList[first]); first++)
-	{}
+	size_t first = 0; // first element to fail condition
+	while (first < m_IndirectCallList.size() && func(m_IndirectCallList[first]))
+	{
+		first++;
+	}
 
+	// Partition all draw calls so that only ones that pass f() are at front and fail f() at back
 	if (first != m_IndirectCallList.size())
 	{
 		for (size_t i = first + 1; i < m_IndirectCallList.size(); i++)
@@ -139,6 +138,7 @@ void DrawPool::UpdateDrawCalls()
 		}
 	}
 
+	// Tell GPU to only run draw calls for the DAICs on left of the partition. All others won't be drawn
 	m_DrawCallLength = first;
 	m_IndirectCallBuffer.SetBufferData<DAIC>(m_IndirectCallList, GL_DYNAMIC_DRAW);
 	m_ExtraChunkDataBuffer.SetBufferData<glm::vec4>(m_ExtraChunkDataList, GL_DYNAMIC_DRAW);

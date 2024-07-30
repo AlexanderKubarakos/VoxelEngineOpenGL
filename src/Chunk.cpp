@@ -34,51 +34,10 @@ void Chunk::GreedyMesh()
 		}
 	}
 
-
 	glm::vec3 color{ 0.7f, 0.3f, 0.1f };
-	glm::vec3 normal{ 1.0f, 0.0f, 0.0f };
+	glm::vec3 normal{ 0.0f, 0.0f, 0.0f };
 	std::array< std::vector<Vertex>, 6> vertexData;
-	std::vector<Vertex> nVerts;
-
-	auto sideAddXY = [&](int bottomX, int bottomY, int lengthX, int lengthY, int z) mutable
-		{
-			Vertex bottomLeft{ {static_cast<float>(bottomX), static_cast<float>(bottomY), static_cast<float>(z)}, {normal}, {color} };
-			Vertex topLeft{ {static_cast<float>(bottomX), static_cast<float>(bottomY + lengthY), static_cast<float>(z)}, {normal}, {color} };
-			Vertex bottomRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(bottomY), static_cast<float>(z)}, {normal}, {color} };
-			Vertex topRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(bottomY + lengthY), static_cast<float>(z)}, {normal}, {color} };
-
-			nVerts.push_back(bottomLeft);
-			nVerts.push_back(topLeft);
-			nVerts.push_back(bottomRight);
-			nVerts.push_back(topRight);
-		};
-
-	auto sideAddXZ = [&](int bottomX, int bottomZ, int lengthX, int lengthZ, int y) mutable
-		{
-			Vertex bottomLeft{ {static_cast<float>(bottomX), static_cast<float>(y), static_cast<float>(bottomZ)}, {normal}, {color} };
-			Vertex topLeft{ {static_cast<float>(bottomX), static_cast<float>(y), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
-			Vertex bottomRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(y), static_cast<float>(bottomZ)}, {normal}, {color} };
-			Vertex topRight{ {static_cast<float>(bottomX + lengthX), static_cast<float>(y), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
-
-			nVerts.push_back(bottomLeft);
-			nVerts.push_back(topLeft);
-			nVerts.push_back(bottomRight);
-			nVerts.push_back(topRight);
-		};
-
-	auto sideAddYZ = [&](int bottomY, int bottomZ, int lengthY, int lengthZ, int x) mutable
-		{
-			Vertex bottomLeft{ {static_cast<float>(x), static_cast<float>(bottomY), static_cast<float>(bottomZ)}, {normal}, {color} };
-			Vertex topLeft{ {static_cast<float>(x), static_cast<float>(bottomY), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
-			Vertex bottomRight{ {static_cast<float>(x), static_cast<float>(bottomY + lengthY), static_cast<float>(bottomZ)}, {normal}, {color} };
-			Vertex topRight{ {static_cast<float>(x), static_cast<float>(bottomY + lengthY), static_cast<float>(bottomZ + lengthZ)}, {normal}, {color} };
-
-			nVerts.push_back(bottomLeft);
-			nVerts.push_back(topLeft);
-			nVerts.push_back(bottomRight);
-			nVerts.push_back(topRight);
-		};
-
+	
 	// xy plane, facing -layerZ
 	for (int layerZ = 0; layerZ < 16; layerZ++)
 	{

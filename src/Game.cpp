@@ -33,7 +33,7 @@ void Game::Run()
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
 
-	DrawPool pool{ 18, 8096 };
+	DrawPool pool{ 8*8*8*6, 8096 };
 
 	std::vector<Chunk> chunks;
 
