@@ -124,6 +124,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)\includes;$(ProjectDir)\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,7 +150,7 @@
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\OpenGL\Shaders\Shader.cpp" />
+    <ClCompile Include="src\OpenGL\Shader.cpp" />
     <ClCompile Include="src\OpenGL\VAO.cpp" />
     <ClCompile Include="src\OpenGL\Buffer.cpp" />
     <ClCompile Include="src\Window.cpp" />
@@ -464,7 +465,7 @@
     <ClInclude Include="src\Utilities.hpp" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\OpenGL\camera.hpp" />
-    <ClInclude Include="src\OpenGL\Shaders\Shader.h" />
+    <ClInclude Include="src\OpenGL\Shader.h" />
     <ClInclude Include="src\OpenGL\VAO.h" />
     <ClInclude Include="src\OpenGL\Buffer.h" />
     <ClInclude Include="src\Vertex.hpp" />
@@ -609,8 +610,8 @@
     <None Include="includes\glm\gtx\vector_angle.inl" />
     <None Include="includes\glm\gtx\vector_query.inl" />
     <None Include="includes\glm\gtx\wrap.inl" />
-    <None Include="src\OpenGL\Shaders\fragmentShader.glsl" />
-    <None Include="src\OpenGL\Shaders\vertexShader.glsl" />
+    <None Include="src\Shaders\fragmentShader.glsl" />
+    <None Include="src\Shaders\vertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

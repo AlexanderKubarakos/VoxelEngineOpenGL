@@ -33,7 +33,7 @@
     <ClCompile Include="src\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\OpenGL\Shaders\Shader.cpp">
+    <ClCompile Include="src\OpenGL\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\OpenGL\VAO.cpp">
@@ -962,7 +962,7 @@
     <ClInclude Include="src\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL\Shaders\Shader.h">
+    <ClInclude Include="src\OpenGL\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\OpenGL\VAO.h">
@@ -1429,7 +1429,7 @@
     <None Include="includes\glm\gtx\wrap.inl">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="src\OpenGL\Shaders\fragmentShader.glsl" />
-    <None Include="src\OpenGL\Shaders\vertexShader.glsl" />
+    <None Include="src\Shaders\fragmentShader.glsl" />
+    <None Include="src\Shaders\vertexShader.glsl" />
   </ItemGroup>
 </Project>

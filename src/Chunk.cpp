@@ -1,11 +1,8 @@
 #include "Chunk.hpp"
 
 #include <chrono>
-#include <iostream>
 
-#include "imgui.h"
-
-Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
+Chunk::Chunk(glm::vec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition(t_ChunkPosition), m_DrawPool(t_DrawPool), m_BucketID(nullptr)
 {
 	for (int x = 0; x < 16; x++)
 	{
@@ -22,29 +19,16 @@ Chunk::Chunk(glm::vec3 t_ChunkPosition) : m_ChunkPosition(t_ChunkPosition)
 	}
 }
 
-void Chunk::MeshChunk(DrawPool& t_DrawPool)
+void Chunk::MeshChunk()
 {
-	GreedyMesh(t_DrawPool);
+	GreedyMesh();
 }
 
-void Chunk::RenderChunk(VAO& t_ChunkVAO, Shader& t_Shader)
-{
-	if (m_MeshLength == 0)
-	{
-		return;
-	}
-
-	ImGui::Text("Chunk at [x:%i y:%i z:%i] Tris count: %i", (int)m_ChunkPosition.x, (int)m_ChunkPosition.y, (int)m_ChunkPosition.z, m_MeshLength/3);
-
-	t_Shader.SetVec3("ChunkPosition", m_ChunkPosition);
-	t_ChunkVAO.BindVertexBuffer(m_VertexBuffer, 0, 0, 6 * sizeof(float));
-	t_ChunkVAO.BindElementBuffer(m_IndexBuffer);
-	glDrawElements(GL_TRIANGLES, m_MeshLength, GL_UNSIGNED_INT, 0);
-}
-
-void Chunk::GreedyMesh(DrawPool& t_DrawPool)
+void Chunk::GreedyMesh()
 {
 	//BUG: remember to un section old bucket, right now calking greedy mesh more than once causes memory leak
+	if (m_BucketID != nullptr)
+		m_DrawPool.FreeBucket(m_BucketID);
 
 	glm::vec3 color{ 0.7f, 0.3f, 0.1f };
 	glm::vec3 normal{ 1.0f, 0.0f, 0.0f };
@@ -534,12 +518,9 @@ void Chunk::GreedyMesh(DrawPool& t_DrawPool)
 	}
 
 
-	m_BucketID = t_DrawPool.AllocateBucket(nVerts.size());
-	t_DrawPool.FillBucket(m_BucketID, nVerts);
-
-	//m_MeshLength = indCount;
-
-	delete[] data;
+	m_BucketID = m_DrawPool.AllocateBucket(static_cast<int>(nVerts.size()));
+	auto extraData = glm::vec4(m_ChunkPosition, 0);
+	m_DrawPool.FillBucket(m_BucketID, nVerts, extraData);
 }
 
 //void Chunk::SetChunkNeighbor(Utilities::DIRECTION t_Direction, Chunk* t_Neighbor)

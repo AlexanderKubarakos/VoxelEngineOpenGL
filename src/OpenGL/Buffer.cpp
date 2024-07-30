@@ -15,6 +15,11 @@ void Buffer::BindBuffer(GLbitfield t_BindPointFlag)
     glBindBuffer(t_BindPointFlag, m_Id);
 }
 
+void Buffer::BindBufferBase(GLbitfield t_BindPointFlag, GLint t_Target)
+{
+    glBindBufferBase(t_BindPointFlag, t_Target, m_Id);
+}
+
 void Buffer::SetupBufferStorage(size_t size, void* data, GLbitfield flags) const
 {
 	glNamedBufferStorage(m_Id, static_cast<int>(size), data, flags);

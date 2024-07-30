@@ -26,18 +26,17 @@ void Game::Stop()
 void Game::Run()
 {
 	DrawPool pool{ 16, 8096 };
-	//auto id = pool.AllocateBucket(4); // 4 vertices
-	//pool.FillBucket(id, data);
-
-	VAO chunkVAO;
-	
-	chunkVAO.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE, 0); // Position Attribute
-	chunkVAO.AddAttribute(1, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3); // Position Attribute
 
 	std::vector<Chunk> chunks;
 
-	chunks.emplace_back(glm::vec3(0,0,0));
-	chunks.back().MeshChunk(pool);
+	chunks.emplace_back(glm::vec3(0,0,0), pool);
+	chunks.back().MeshChunk();
+
+	chunks.emplace_back(glm::vec3(0, 2, 0), pool);
+	chunks.back().MeshChunk();
+
+	chunks.emplace_back(glm::vec3(2, 2, 0), pool);
+	chunks.back().MeshChunk();
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -45,13 +44,6 @@ void Game::Run()
 
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
-
-	// NEW stuff
-	std::vector<Vertex> data = { {{-0.5,  0.5, -0.5}, { 0.0, 0.0, 0.0}, {0.5, 0.8, 0.3} },
-										{ {0.5, -0.5, -0.5}, { 0.0, 0.0, 0.0}, {0.5, 0.8, 0.3} },
-								{{-0.5, -0.5, -0.5}, { 0.0, 0.0, 0.0}, {0.5, 0.8, 0.3} },
-								 {{0.5, 0.5, -0.5}, { 0.0, 0.0, 0.0}, {0.5, 0.8, 0.3} } };
-
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
@@ -89,15 +81,6 @@ void Game::Run()
 
 		m_Shader.Use();
 		m_Shader.SetMatrix4f("MVP", MVP);
-		//chunkVAO.Bind();
-		// Draw chunks here
-		/*for (Chunk& chunk : chunks)
-		{
-			chunk.RenderChunk(chunkVAO, m_Shader);
-		}*/
-		
-		glm::vec3 t{ 0,0,0 };
-		m_Shader.SetVec3("ChunkPosition", t);
 		pool.Render();
 
         // End of frame

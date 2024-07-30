@@ -2,7 +2,7 @@
 #include "Window.hpp"
 
 #include "OpenGL/camera.hpp"
-#include "OpenGL/Shaders/Shader.h"
+#include "OpenGL/Shader.h"
 
 #define WIDTH 1200
 #define HEIGHT 1200
@@ -16,6 +16,6 @@ public:
 private:
 	bool m_Running = true;
 	Window m_Window { WIDTH, HEIGHT, "MyGame"};
-	Shader m_Shader {"src/OpenGL/Shaders/vertexShader.glsl", "src/OpenGL/Shaders/fragmentShader.glsl"};
+	Shader m_Shader {"src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"};
 	Camera m_Camera {{0,0,64}};
 };

@@ -26,6 +26,10 @@ public:
 	    return *this;
     }
 
+    // Well what's different with *BufferData* and *BufferStorage*, BufferData will send the data to the gpu and the gpu will create a new spot of memory for it
+    // orphaning the old memory. Buffer Storage signs a contract with the GPU so that the memory you allocate on the gpu will stay there and can be changed
+    // this is quicker however you can not change it's size
+    // TLDR: prefer buffer storage over data
     template<typename T>
     void SetBufferData(const std::vector<T>& t_Data, GLbitfield t_UsageFlags = GL_STATIC_DRAW) const
     {
@@ -38,6 +42,7 @@ public:
     }
 
     void BindBuffer(GLbitfield t_BindPointFlag);
+    void BindBufferBase(GLbitfield t_BindPointFlag, GLint t_Target);
 
     void SetupBufferStorage(size_t size, void* data, GLbitfield flags) const;
     void* MapBufferRange(size_t offset, size_t length, GLbitfield flags) const;
