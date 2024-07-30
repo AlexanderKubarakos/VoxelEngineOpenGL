@@ -1,8 +1,8 @@
-#include "Game.h"
+#include "Game.hpp"
 
 #include <chrono>
 
-#include "OpenGL/VAO.h"
+#include "OpenGL/VAO.hpp"
 #include "Chunk.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

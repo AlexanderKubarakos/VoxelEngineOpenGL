@@ -1,4 +1,4 @@
-#include "VAO.h"
+#include "VAO.hpp"
 
 #include <glad/glad.h>
 

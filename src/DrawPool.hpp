@@ -2,8 +2,8 @@
 #include <deque>
 #include "glm/glm.hpp"
 #include "Vertex.hpp"
-#include "OpenGL/Buffer.h"
-#include "OpenGL/VAO.h"
+#include "OpenGL/Buffer.hpp"
+#include "OpenGL/VAO.hpp"
 
 class DrawPool
 {

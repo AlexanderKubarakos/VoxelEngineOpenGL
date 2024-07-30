@@ -463,11 +463,11 @@
     <ClInclude Include="src\DrawPool.hpp" />
     <ClInclude Include="src\Input.hpp" />
     <ClInclude Include="src\Utilities.hpp" />
-    <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\Game.hpp" />
     <ClInclude Include="src\OpenGL\camera.hpp" />
-    <ClInclude Include="src\OpenGL\Shader.h" />
-    <ClInclude Include="src\OpenGL\VAO.h" />
-    <ClInclude Include="src\OpenGL\Buffer.h" />
+    <ClInclude Include="src\OpenGL\Shader.hpp" />
+    <ClInclude Include="src\OpenGL\VAO.hpp" />
+    <ClInclude Include="src\OpenGL\Buffer.hpp" />
     <ClInclude Include="src\Vertex.hpp" />
     <ClInclude Include="src\Window.hpp" />
   </ItemGroup>

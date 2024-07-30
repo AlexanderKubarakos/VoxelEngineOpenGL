@@ -956,19 +956,19 @@
     <ClInclude Include="includes\glm\vector_relational.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Game.h">
+    <ClInclude Include="src\Game.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL\Shader.h">
+    <ClInclude Include="src\OpenGL\Shader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL\VAO.h">
+    <ClInclude Include="src\OpenGL\VAO.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\OpenGL\Buffer.h">
+    <ClInclude Include="src\OpenGL\Buffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Chunk.hpp">

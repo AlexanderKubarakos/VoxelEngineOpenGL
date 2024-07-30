@@ -2,7 +2,7 @@
 #include "Window.hpp"
 
 #include "OpenGL/camera.hpp"
-#include "OpenGL/Shader.h"
+#include "OpenGL/Shader.hpp"
 
 #define WIDTH 1200
 #define HEIGHT 1200
