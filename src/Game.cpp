@@ -25,11 +25,19 @@ void Game::Stop()
 
 void Game::Run()
 {
-	DrawPool pool{ 16, 8096 };
+	bool showDemoWindow = false;
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
+	ImGui_ImplOpenGL3_Init();
+
+	DrawPool pool{ 18, 8096 };
 
 	std::vector<Chunk> chunks;
 
-	chunks.emplace_back(glm::vec3(0,0,0), pool);
+	chunks.emplace_back(glm::vec3(0, 0, 0), pool);
 	chunks.back().MeshChunk();
 
 	chunks.emplace_back(glm::vec3(0, 2, 0), pool);
@@ -38,15 +46,9 @@ void Game::Run()
 	chunks.emplace_back(glm::vec3(2, 2, 0), pool);
 	chunks.back().MeshChunk();
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-
-	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
-	ImGui_ImplOpenGL3_Init();
-
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
+
 	while (m_Running)
 	{
         // Start Frame
@@ -61,7 +63,12 @@ void Game::Run()
 		ImGui::Begin("Debug");
 		ImGui::Text("Delta Time: %fms", Utilities::GetDeltaTime() * 1000);
 		ImGui::Text("FPS: %.2f", 1 / Utilities::GetDeltaTime());
-		
+		ImGui::Checkbox("Show Demo Window", &showDemoWindow);
+		if (showDemoWindow)
+			ImGui::ShowDemoWindow();
+
+		pool.Debug();
+
 		// Swap wireframe
 		if (Input::IsKeyPressed(GLFW_KEY_X))
 		{

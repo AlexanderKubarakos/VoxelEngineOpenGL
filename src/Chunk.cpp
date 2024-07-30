@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-Chunk::Chunk(glm::vec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition(t_ChunkPosition), m_DrawPool(t_DrawPool), m_BucketID(nullptr)
+Chunk::Chunk(glm::vec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition(t_ChunkPosition), m_DrawPool(t_DrawPool), m_BucketIDs {nullptr}
 {
 	for (int x = 0; x < 16; x++)
 	{
@@ -26,12 +26,18 @@ void Chunk::MeshChunk()
 
 void Chunk::GreedyMesh()
 {
-	//BUG: remember to un section old bucket, right now calking greedy mesh more than once causes memory leak
-	if (m_BucketID != nullptr)
-		m_DrawPool.FreeBucket(m_BucketID);
+	for (auto id : m_BucketIDs)
+	{
+		if (id != nullptr)
+		{
+			m_DrawPool.FreeBucket(id);
+		}
+	}
+
 
 	glm::vec3 color{ 0.7f, 0.3f, 0.1f };
 	glm::vec3 normal{ 1.0f, 0.0f, 0.0f };
+	std::array< std::vector<Vertex>, 6> vertexData;
 	std::vector<Vertex> nVerts;
 
 	auto sideAddXY = [&](int bottomX, int bottomY, int lengthX, int lengthY, int z) mutable
@@ -154,7 +160,16 @@ void Chunk::GreedyMesh()
 						bitmap[subY] |= voxelMask;
 					}
 							
-					sideAddXY(layerX, layerY, lengthX, lengthY, layerZ);
+					//sideAddXY(layerX, layerY, lengthX, lengthY, layerZ);
+					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
+
+					vertexData[Utilities::DIRECTION::NORTH].push_back(bottomLeft);
+					vertexData[Utilities::DIRECTION::NORTH].push_back(topLeft);
+					vertexData[Utilities::DIRECTION::NORTH].push_back(bottomRight);
+					vertexData[Utilities::DIRECTION::NORTH].push_back(topRight);
 				}
 			}
 		}
@@ -225,7 +240,17 @@ void Chunk::GreedyMesh()
 						bitmap[subY] |= voxelMask;
 					}
 
-					sideAddXY(layerX, layerY, lengthX, lengthY, layerZ + 1);
+					//sideAddXY(layerX, layerY, lengthX, lengthY, layerZ + 1);
+					int tempZ = layerZ + 1;
+					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(tempZ)}, {normal}, {color} };
+					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(tempZ)}, {normal}, {color} };
+					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(tempZ)}, {normal}, {color} };
+					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY + lengthY), static_cast<float>(tempZ)}, {normal}, {color} };
+
+					vertexData[Utilities::DIRECTION::SOUTH].push_back(bottomLeft);
+					vertexData[Utilities::DIRECTION::SOUTH].push_back(topLeft);
+					vertexData[Utilities::DIRECTION::SOUTH].push_back(bottomRight);
+					vertexData[Utilities::DIRECTION::SOUTH].push_back(topRight);
 				}
 			}
 		}
@@ -298,7 +323,17 @@ void Chunk::GreedyMesh()
 						bitmap[subZ] |= voxelMask;
 					}
 
-					sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY + 1);
+					//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY + 1);
+					int tempY = layerY + 1;
+					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(tempY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(tempY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(tempY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(tempY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+
+					vertexData[Utilities::DIRECTION::UP].push_back(bottomLeft);
+					vertexData[Utilities::DIRECTION::UP].push_back(topLeft);
+					vertexData[Utilities::DIRECTION::UP].push_back(bottomRight);
+					vertexData[Utilities::DIRECTION::UP].push_back(topRight);
 				}
 			}
 		}
@@ -369,7 +404,16 @@ void Chunk::GreedyMesh()
 						bitmap[subZ] |= voxelMask;
 					}
 
-					sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY);
+					//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY);
+					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+
+					vertexData[Utilities::DIRECTION::DOWN].push_back(bottomLeft);
+					vertexData[Utilities::DIRECTION::DOWN].push_back(topLeft);
+					vertexData[Utilities::DIRECTION::DOWN].push_back(bottomRight);
+					vertexData[Utilities::DIRECTION::DOWN].push_back(topRight);
 				}
 			}
 		}
@@ -440,7 +484,17 @@ void Chunk::GreedyMesh()
 						bitmap[subZ] |= voxelMask;
 					}
 
-					sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX + 1);
+					//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX + 1);
+					int tempX = layerX + 1;
+					Vertex bottomLeft{ {static_cast<float>(tempX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topLeft{ {static_cast<float>(tempX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomRight{ {static_cast<float>(tempX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topRight{ {static_cast<float>(tempX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+
+					vertexData[Utilities::DIRECTION::EAST].push_back(bottomLeft);
+					vertexData[Utilities::DIRECTION::EAST].push_back(topLeft);
+					vertexData[Utilities::DIRECTION::EAST].push_back(bottomRight);
+					vertexData[Utilities::DIRECTION::EAST].push_back(topRight);
 				}
 			}
 		}
@@ -511,16 +565,28 @@ void Chunk::GreedyMesh()
 						bitmap[subZ] |= voxelMask;
 					}
 
-					sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX);
+					//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX);
+					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomRight{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex topRight{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+
+					vertexData[Utilities::DIRECTION::WEST].push_back(bottomLeft);
+					vertexData[Utilities::DIRECTION::WEST].push_back(topLeft);
+					vertexData[Utilities::DIRECTION::WEST].push_back(bottomRight);
+					vertexData[Utilities::DIRECTION::WEST].push_back(topRight);
 				}
 			}
 		}
 	}
 
-
-	m_BucketID = m_DrawPool.AllocateBucket(static_cast<int>(nVerts.size()));
-	auto extraData = glm::vec4(m_ChunkPosition, 0);
-	m_DrawPool.FillBucket(m_BucketID, nVerts, extraData);
+	for (int i = 0; i < 6; i++)
+	{
+		Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
+		m_BucketIDs[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
+		auto extraData = glm::vec4(m_ChunkPosition, 0);
+		m_DrawPool.FillBucket(m_BucketIDs[direction], vertexData[direction], direction, extraData);
+	}
 }
 
 //void Chunk::SetChunkNeighbor(Utilities::DIRECTION t_Direction, Chunk* t_Neighbor)

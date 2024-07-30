@@ -16,7 +16,7 @@ public:
 		: m_BlockData(std::move(t_Other.m_BlockData)),
 		  m_ChunkPosition(std::move(t_Other.m_ChunkPosition)),
 		  m_DrawPool(t_Other.m_DrawPool),
-		  m_BucketID(t_Other.m_BucketID)
+		  m_BucketIDs(t_Other.m_BucketIDs)
 	{
 	}
 
@@ -33,7 +33,7 @@ private:
 	// DrawPool this chunks visuals are part of
 	DrawPool& m_DrawPool;
 	// Bucket ID of supplied DrawPool
-	DrawPool::BucketID m_BucketID;
+	std::array<DrawPool::BucketID, 6> m_BucketIDs;
 
 	//Use Greedy Mesh algo and push data to Draw Pool
 	void GreedyMesh();

@@ -5,10 +5,10 @@ namespace Utilities
 {
 	enum DIRECTION
 	{
-		UP, // +z
-		DOWN, // -z
-		NORTH, // +y (forward)
-		SOUTH, // -y (back)
+		UP = 0, // +y
+		DOWN, // -y
+		SOUTH, // +z (back)
+		NORTH, // -z (forward)
 		EAST, // +x (right)
 		WEST // -x (left)
 	};

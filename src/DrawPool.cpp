@@ -1,6 +1,9 @@
 #include "DrawPool.hpp"
 
+#include <algorithm>
 #include <iostream>
+
+#include "imgui.h"
 
 // This draw pool expects lists of vertices, and will automatically create the correct indices for every 4 vertices to make a quad
 // aka this draw pool expects quads not triangles
@@ -25,7 +28,11 @@ DrawPool::~DrawPool()
 DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 {
 	if (t_Size < 1 || t_Size > m_BucketSize || m_EmptyBuckets.empty())
+	{
+		std::cerr << "Error: While trying to allocate bucket, out of buckets, or requesting no space in bucket. Buckets Left: " << m_EmptyBuckets.size() << '\n';
 		return nullptr;
+	}
+		
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
 	m_IndirectCallList.emplace_back(t_Size/4 * 6, 1, 0, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
@@ -34,7 +41,7 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 	return m_IndirectCallList.back().m_BucketID;
 }
 
-void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, glm::vec4& t_ExtraData)
+void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::vec4& t_ExtraData)
 {
 	if (t_Data.size() > m_BucketSize)
 	{
@@ -47,8 +54,7 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, glm:
 
 	//TODO: make sure these stay in sync
 	m_ExtraChunkDataList[*t_Id] = t_ExtraData;
-
-	UpdateIndirectCalls();
+	m_IndirectCallList[*t_Id].m_Direction = t_MeshDirection;
 }
 
 void DrawPool::FreeBucket(BucketID t_Id)
@@ -63,9 +69,6 @@ void DrawPool::FreeBucket(BucketID t_Id)
 	m_IndirectCallList.pop_back();
 	*m_IndirectCallList[*t_Id].m_BucketID = *t_Id;
 	delete t_Id; // Free the memory for the old DAIC pointer
-
-	// TODO: maybe remove update indirect call here? just in case we want to delete a lot of buckets in same frame
-	UpdateIndirectCalls();
 }
 
 // Bucket Size is vertex count
@@ -110,8 +113,33 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	}
 }
 
-void DrawPool::UpdateIndirectCalls()
+void DrawPool::UpdateDrawCalls()
 {
+	// Sort draw calls
+
+	auto func = [&](DAIC& daic)->bool
+		{
+			return m_SideOcclusionOverride[daic.m_Direction];
+		};
+
+	size_t first = 0;
+	for (; first < m_IndirectCallList.size() && func(m_IndirectCallList[first]); first++)
+	{}
+
+	if (first != m_IndirectCallList.size())
+	{
+		for (size_t i = first + 1; i < m_IndirectCallList.size(); i++)
+		{
+			if (func(m_IndirectCallList[i]))
+			{
+				std::swap(m_IndirectCallList[first], m_IndirectCallList[i]);
+				std::swap(m_ExtraChunkDataList[first], m_ExtraChunkDataList[i]);
+				first++;
+			}
+		}
+	}
+
+	m_DrawCallLength = first;
 	m_IndirectCallBuffer.SetBufferData<DAIC>(m_IndirectCallList, GL_DYNAMIC_DRAW);
 	m_ExtraChunkDataBuffer.SetBufferData<glm::vec4>(m_ExtraChunkDataList, GL_DYNAMIC_DRAW);
 }
@@ -134,10 +162,29 @@ void DrawPool::GenerateIndices()
 
 void DrawPool::Render()
 {
+	UpdateDrawCalls();
+
 	m_VAO.Bind();
 	m_IndicesBuffer.BindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	m_IndirectCallBuffer.BindBuffer(GL_DRAW_INDIRECT_BUFFER);
 	m_ExtraChunkDataBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 0);
 
-	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(m_IndirectCallList.size()), sizeof(DAIC));
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(m_DrawCallLength), sizeof(DAIC));
+}
+
+void DrawPool::Debug()
+{
+	if (ImGui::CollapsingHeader("Draw Pool", ImGuiTreeNodeFlags_None))
+	{
+		ImGui::Text("Bucket Quantity: %i", m_BucketQuantity);
+		ImGui::Text("Bucket Size (Vertices): %i", m_BucketSize);
+		ImGui::Text("Indirect Draw Call count: (%i/%i)", m_DrawCallLength, m_IndirectCallList.size());
+		ImGui::Text("Occlusion Override");
+		ImGui::Checkbox("Up", &m_SideOcclusionOverride[Utilities::DIRECTION::UP]);
+		ImGui::Checkbox("Down", &m_SideOcclusionOverride[Utilities::DIRECTION::DOWN]);
+		ImGui::Checkbox("North", &m_SideOcclusionOverride[Utilities::DIRECTION::NORTH]);
+		ImGui::Checkbox("South", &m_SideOcclusionOverride[Utilities::DIRECTION::SOUTH]);
+		ImGui::Checkbox("East", &m_SideOcclusionOverride[Utilities::DIRECTION::EAST]);
+		ImGui::Checkbox("West", &m_SideOcclusionOverride[Utilities::DIRECTION::WEST]);
+	}
 }
