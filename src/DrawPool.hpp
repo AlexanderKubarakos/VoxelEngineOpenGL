@@ -22,7 +22,7 @@ public:
 	// Allocate memory in the pool for a mesh of vertex count = t_Size
 	BucketID AllocateBucket(int t_Size);
 	// Fill bucket t_Id with data for t_Data, will throw error if trying to over fill bucket
-	void FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::vec4& t_ExtraData);
+	void FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::ivec4& t_ExtraData);
 	// Free a bucket, add it back to the queue to be filled, and delete its draw call
 	void FreeBucket(BucketID t_Id);
 	// Render all meshes in pool
@@ -73,7 +73,7 @@ private:
 	Buffer m_ExtraChunkDataBuffer;
 
 	std::vector<DAIC> m_IndirectCallList;
-	std::vector<glm::vec4> m_ExtraChunkDataList;
+	std::vector<glm::ivec4> m_ExtraChunkDataList;
 
 	void Reserve(size_t t_BucketQuantity, size_t t_BucketSize); // Allocates memory in back end for pool
 	void UpdateDrawCalls(); // Resorts draw call (DAIC) and re-uploads all data to GPU so that draw calls are correct

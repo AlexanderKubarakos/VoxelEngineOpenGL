@@ -6,7 +6,7 @@
 class Chunk
 {
 public:
-	Chunk(glm::vec3 t_ChunkPosition, DrawPool& t_DrawPool);
+	Chunk(glm::ivec3 t_ChunkPosition, DrawPool& t_DrawPool);
 
 	void MeshChunk();
 	//void SetChunkNeighbor(Utilities::DIRECTION t_Direction, Chunk* t_Neighbor);
@@ -29,7 +29,7 @@ private:
 	//std::array<Chunk*, 6> m_ChunkNeighbors{nullptr}; // maybe use a weak pointer
 
 	// Position of chunk relative to other chunk
-	glm::vec3 m_ChunkPosition;
+	glm::ivec3 m_ChunkPosition;
 	// DrawPool this chunks visuals are part of
 	DrawPool& m_DrawPool;
 	// Bucket ID of supplied DrawPool

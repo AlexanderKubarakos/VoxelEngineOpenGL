@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-Chunk::Chunk(glm::vec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition(t_ChunkPosition), m_DrawPool(t_DrawPool), m_BucketIDs {nullptr}
+Chunk::Chunk(glm::ivec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition(t_ChunkPosition), m_DrawPool(t_DrawPool), m_BucketIDs {nullptr}
 {
 	for (int x = 0; x < 16; x++)
 	{
@@ -33,10 +33,7 @@ void Chunk::GreedyMesh()
 			m_DrawPool.FreeBucket(id);
 		}
 	}
-
-	glm::vec3 color{ 0.7f, 0.3f, 0.1f };
-	glm::vec3 normal{ 0.0f, 0.0f, 0.0f };
-	std::array< std::vector<Vertex>, 6> vertexData;
+	std::array<std::vector<Vertex>, 6> vertexData;
 	
 	// xy plane, facing -layerZ
 	for (int layerZ = 0; layerZ < 16; layerZ++)
@@ -120,10 +117,10 @@ void Chunk::GreedyMesh()
 					}
 							
 					//sideAddXY(layerX, layerY, lengthX, lengthY, layerZ);
-					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
+					Vertex bottomLeft{ layerX, layerY, layerZ};
+					Vertex topLeft{ layerX, layerY + lengthY, layerZ};
+					Vertex bottomRight{ layerX + lengthX, layerY, layerZ};
+					Vertex topRight{ layerX + lengthX, layerY + lengthY, layerZ};
 
 					vertexData[Utilities::DIRECTION::NORTH].push_back(bottomLeft);
 					vertexData[Utilities::DIRECTION::NORTH].push_back(topLeft);
@@ -201,10 +198,10 @@ void Chunk::GreedyMesh()
 
 					//sideAddXY(layerX, layerY, lengthX, lengthY, layerZ + 1);
 					int tempZ = layerZ + 1;
-					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(tempZ)}, {normal}, {color} };
-					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(tempZ)}, {normal}, {color} };
-					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(tempZ)}, {normal}, {color} };
-					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY + lengthY), static_cast<float>(tempZ)}, {normal}, {color} };
+					Vertex bottomLeft{ layerX, layerY, tempZ};
+					Vertex topLeft{ layerX, layerY + lengthY, tempZ};
+					Vertex bottomRight{ layerX + lengthX, layerY, tempZ};
+					Vertex topRight{ layerX + lengthX, layerY + lengthY, tempZ};
 
 					vertexData[Utilities::DIRECTION::SOUTH].push_back(bottomLeft);
 					vertexData[Utilities::DIRECTION::SOUTH].push_back(topLeft);
@@ -284,10 +281,10 @@ void Chunk::GreedyMesh()
 
 					//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY + 1);
 					int tempY = layerY + 1;
-					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(tempY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(tempY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
-					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(tempY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(tempY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomLeft{ layerX, tempY, layerZ};
+					Vertex topLeft{ layerX, tempY, layerZ + lengthZ};
+					Vertex bottomRight{ layerX + lengthX, tempY, layerZ};
+					Vertex topRight{ layerX + lengthX, tempY, layerZ + lengthZ};
 
 					vertexData[Utilities::DIRECTION::UP].push_back(bottomLeft);
 					vertexData[Utilities::DIRECTION::UP].push_back(topLeft);
@@ -364,10 +361,10 @@ void Chunk::GreedyMesh()
 					}
 
 					//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY);
-					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
-					Vertex bottomRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topRight{ {static_cast<float>(layerX + lengthX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomLeft{ layerX, layerY, layerZ};
+					Vertex topLeft{ layerX, layerY, layerZ + lengthZ};
+					Vertex bottomRight{ layerX + lengthX, layerY, layerZ};
+					Vertex topRight{ layerX + lengthX, layerY, layerZ + lengthZ};
 
 					vertexData[Utilities::DIRECTION::DOWN].push_back(bottomLeft);
 					vertexData[Utilities::DIRECTION::DOWN].push_back(topLeft);
@@ -445,10 +442,10 @@ void Chunk::GreedyMesh()
 
 					//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX + 1);
 					int tempX = layerX + 1;
-					Vertex bottomLeft{ {static_cast<float>(tempX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topLeft{ {static_cast<float>(tempX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
-					Vertex bottomRight{ {static_cast<float>(tempX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topRight{ {static_cast<float>(tempX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomLeft{ tempX, layerY, layerZ};
+					Vertex topLeft{ tempX, layerY, layerZ + lengthZ};
+					Vertex bottomRight{ tempX, layerY + lengthY, layerZ};
+					Vertex topRight{ tempX, layerY + lengthY, layerZ + lengthZ};
 
 					vertexData[Utilities::DIRECTION::EAST].push_back(bottomLeft);
 					vertexData[Utilities::DIRECTION::EAST].push_back(topLeft);
@@ -525,10 +522,10 @@ void Chunk::GreedyMesh()
 					}
 
 					//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX);
-					Vertex bottomLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topLeft{ {static_cast<float>(layerX), static_cast<float>(layerY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
-					Vertex bottomRight{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ)}, {normal}, {color} };
-					Vertex topRight{ {static_cast<float>(layerX), static_cast<float>(layerY + lengthY), static_cast<float>(layerZ + lengthZ)}, {normal}, {color} };
+					Vertex bottomLeft{ layerX, layerY, layerZ};
+					Vertex topLeft{ layerX, layerY, layerZ + lengthZ};
+					Vertex bottomRight{ layerX, layerY + lengthY, layerZ};
+					Vertex topRight{ layerX, layerY + lengthY, layerZ + lengthZ};
 
 					vertexData[Utilities::DIRECTION::WEST].push_back(bottomLeft);
 					vertexData[Utilities::DIRECTION::WEST].push_back(topLeft);
@@ -543,7 +540,7 @@ void Chunk::GreedyMesh()
 	{
 		Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
 		m_BucketIDs[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
-		auto extraData = glm::vec4(m_ChunkPosition, 0);
+		auto extraData = glm::ivec4(m_ChunkPosition, 0);
 		m_DrawPool.FillBucket(m_BucketIDs[direction], vertexData[direction], direction, extraData);
 	}
 }

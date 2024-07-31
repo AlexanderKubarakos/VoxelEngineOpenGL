@@ -16,7 +16,8 @@ public:
     VAO& operator=(VAO&& other) noexcept = delete;
 
     void Bind();
-    void AddAttribute(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, GLboolean t_Normalized, int t_RelativeOffset);
+    void AddAttributeFloat(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, GLboolean t_Normalized, int t_RelativeOffset);
+    void AddAttributeInt(unsigned int t_AttributeIndex, unsigned int t_BindingIndex, int t_Size, GLenum t_Type, int t_RelativeOffset);
     void BindVertexBuffer(const Buffer& t_Buffer, unsigned int t_BindingIndex, unsigned int t_Offset, int t_Stride);
     void BindElementBuffer(const Buffer& t_Buffer);
     unsigned int GetID() const { return m_Id; }

@@ -38,7 +38,7 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 	return m_IndirectCallList.back().m_BucketID;
 }
 
-void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::vec4& t_ExtraData)
+void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::ivec4& t_ExtraData)
 {
 	if (t_Data.size() > m_BucketSize)
 	{
@@ -84,9 +84,7 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	m_ExtraChunkDataList.resize(t_BucketQuantity);
 
 	// Setup VAO attributes
-	m_VAO.AddAttribute(0, 0, 3, GL_FLOAT, GL_FALSE, 0); // Position Attribute
-	m_VAO.AddAttribute(1, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3); // Normal Attribute
-	m_VAO.AddAttribute(2, 0, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6); // Color Attribute
+	m_VAO.AddAttributeInt(0, 0, 1, GL_INT, 0); // Position Attribute
 
 	// Bind the buffer to the vao
 	m_VAO.BindVertexBuffer(m_VertexBuffer, 0, 0, sizeof(Vertex));
@@ -141,7 +139,7 @@ void DrawPool::UpdateDrawCalls()
 	// Tell GPU to only run draw calls for the DAICs on left of the partition. All others won't be drawn
 	m_DrawCallLength = first;
 	m_IndirectCallBuffer.SetBufferData<DAIC>(m_IndirectCallList, GL_DYNAMIC_DRAW);
-	m_ExtraChunkDataBuffer.SetBufferData<glm::vec4>(m_ExtraChunkDataList, GL_DYNAMIC_DRAW);
+	m_ExtraChunkDataBuffer.SetBufferData<glm::ivec4>(m_ExtraChunkDataList, GL_DYNAMIC_DRAW);
 }
 
 void DrawPool::GenerateIndices()
