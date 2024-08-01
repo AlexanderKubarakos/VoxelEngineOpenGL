@@ -82,7 +82,7 @@ void Game::Run()
 		m_Camera.ProcessInput();
 
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH) / HEIGHT, 0.1f, 250.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f, 250.0f);
 
         glm::mat4 MVP = projection * m_Camera.GetViewMatrix() * model;
 

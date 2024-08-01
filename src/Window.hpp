@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "glm/vec2.hpp"
+
 class Window
 {
 public:
@@ -11,6 +13,7 @@ public:
 
 	bool ShouldWindowClose() const { return glfwWindowShouldClose(m_Window); }
 	GLFWwindow* GetWindowPointer() const { return m_Window;  }
+	glm::ivec2 getExtent();
 
 	Window(const Window& other) = delete;
 	Window(Window&& other) noexcept = delete;
@@ -18,5 +21,4 @@ public:
 	Window& operator=(Window&& other) noexcept = delete;
 private:
 	GLFWwindow* m_Window;
-	int m_Width, m_Height;
 };

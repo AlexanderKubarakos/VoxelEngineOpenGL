@@ -4,9 +4,6 @@
 #include "OpenGL/camera.hpp"
 #include "OpenGL/Shader.hpp"
 
-#define WIDTH 1200
-#define HEIGHT 1200
-
 class Game
 {
 public:
@@ -15,7 +12,7 @@ public:
 
 private:
 	bool m_Running = true;
-	Window m_Window { WIDTH, HEIGHT, "MyGame"};
+	Window m_Window { 1200, 1200, "MyGame"};
 	Shader m_Shader {"src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"};
 	Camera m_Camera {{0,0,64}};
 };
