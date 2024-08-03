@@ -147,6 +147,7 @@
     <ClCompile Include="src\Chunk.cpp" />
     <ClCompile Include="src\DrawPool.cpp" />
     <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\LinearAlgebra.cpp" />
     <ClCompile Include="src\Utilities.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
@@ -463,6 +464,7 @@
     <ClInclude Include="src\Chunk.hpp" />
     <ClInclude Include="src\DrawPool.hpp" />
     <ClInclude Include="src\Input.hpp" />
+    <ClInclude Include="src\LinearAlgebra.hpp" />
     <ClInclude Include="src\Utilities.hpp" />
     <ClInclude Include="src\Game.hpp" />
     <ClInclude Include="src\OpenGL\camera.hpp" />
@@ -613,6 +615,9 @@
     <None Include="includes\glm\gtx\wrap.inl" />
     <None Include="src\Shaders\fragmentShader.glsl" />
     <None Include="src\Shaders\vertexShader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="UsedRes.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

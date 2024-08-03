@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include "LinearAlgebra.hpp"
 
 #include "imgui.h"
 
@@ -108,12 +109,15 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	}
 }
 
-void DrawPool::UpdateDrawCalls()
+void DrawPool::UpdateDrawCalls(glm::mat4& t_MVP)
 {
+	auto frustum = LinAlg::frustumExtraction(t_MVP);
 	// Sort draw calls
 	auto func = [&](DAIC& daic)->bool
 		{
-			return m_SideOcclusionOverride[daic.m_Direction];
+			if (!m_SideOcclusionOverride[daic.m_Direction])
+				return false;
+			return LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID] * 16);
 		};
 
 	size_t first = 0; // first element to fail condition
@@ -129,6 +133,8 @@ void DrawPool::UpdateDrawCalls()
 		{
 			if (func(m_IndirectCallList[i]))
 			{
+				*m_IndirectCallList[first].m_BucketID = i;
+				*m_IndirectCallList[i].m_BucketID = first;
 				std::swap(m_IndirectCallList[first], m_IndirectCallList[i]);
 				std::swap(m_ExtraChunkDataList[first], m_ExtraChunkDataList[i]);
 				first++;
@@ -158,10 +164,12 @@ void DrawPool::GenerateIndices()
 	m_IndicesBuffer.SetBufferData<GLuint>(indices);
 }
 
-void DrawPool::Render()
+void DrawPool::Render(Shader& t_Shader, glm::mat4& t_MVP)
 {
-	UpdateDrawCalls();
+	UpdateDrawCalls(t_MVP);
 
+	t_Shader.Use();
+	t_Shader.SetMatrix4f("MVP", t_MVP);
 	m_VAO.Bind();
 	m_IndicesBuffer.BindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	m_IndirectCallBuffer.BindBuffer(GL_DRAW_INDIRECT_BUFFER);

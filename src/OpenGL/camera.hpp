@@ -49,6 +49,26 @@ public:
 		UpdateCameraVectors();
 	}
 
+	glm::vec3 CameraPos() const
+	{
+		return m_CameraPos;
+	}
+
+	glm::vec3 CameraFront() const
+	{
+		return m_CameraFront;
+	}
+
+	glm::vec3 CameraUp() const
+	{
+		return m_CameraUp;
+	}
+
+	glm::vec3 CameraRight() const
+	{
+		return m_CameraRight;
+	}
+
 private:
 	float m_MoveSpeed;
 	float m_Sensitivity;

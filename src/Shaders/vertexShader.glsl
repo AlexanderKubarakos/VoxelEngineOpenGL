@@ -10,12 +10,14 @@ out vec3 normal;
 
 uniform mat4 MVP;
 
+float WorldScaler = 1;
+
 void main()
 {
     int x = aPos & 31;
     int y = (aPos >> 5) & 31;
     int z = (aPos >> 10) & 31;
-    vec3 augmentedPos = vec3(x, y, z) + d_Data.d[gl_DrawID].xyz * 16;
+    vec3 augmentedPos = vec3(x * WorldScaler, y * WorldScaler, z * WorldScaler) + d_Data.d[gl_DrawID].xyz * 16 * WorldScaler;
     gl_Position = MVP * vec4(augmentedPos, 1.0);
 
     switch (d_Data.d[gl_DrawID].w)

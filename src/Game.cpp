@@ -20,8 +20,7 @@ void Game::Stop()
 	ImGui::DestroyContext();
 }
 
-// TODO:
-// Allow passing in a w component to change world size
+// TODO: add debug drawing, so that you can declare in a macro maybe LineSegment(glm::vec3, glm::vec3, glm::vec3 color);
 
 void Game::Run()
 {
@@ -38,6 +37,12 @@ void Game::Run()
 	std::vector<Chunk> chunks;
 
 	chunks.emplace_back(glm::vec3(0, 0, 0), pool);
+	chunks.back().MeshChunk();
+
+	chunks.emplace_back(glm::vec3(1, 0, 0), pool);
+	chunks.back().MeshChunk();
+
+	chunks.emplace_back(glm::vec3(-1, 0, 0), pool);
 	chunks.back().MeshChunk();
 
 	chunks.emplace_back(glm::vec3(0, 2, 0), pool);
@@ -63,6 +68,7 @@ void Game::Run()
 		ImGui::Begin("Debug");
 		ImGui::Text("Delta Time: %fms", Utilities::GetDeltaTime() * 1000);
 		ImGui::Text("FPS: %.2f", 1 / Utilities::GetDeltaTime());
+		
 		ImGui::Checkbox("Show Demo Window", &showDemoWindow);
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
@@ -82,13 +88,10 @@ void Game::Run()
 		m_Camera.ProcessInput();
 
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f, 250.0f);
-
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f,16.0f * 16.0f);
         glm::mat4 MVP = projection * m_Camera.GetViewMatrix() * model;
 
-		m_Shader.Use();
-		m_Shader.SetMatrix4f("MVP", MVP);
-		pool.Render();
+		pool.Render(m_Shader, MVP);
 
         // End of frame
         Input::ResetInputs(m_Window); // Resets all need inputs
@@ -104,8 +107,10 @@ void Game::Run()
 		{
 			Stop();
 		}
+
 	}
 }
 
 // TODO: add normal information
 // and add some lighting
+

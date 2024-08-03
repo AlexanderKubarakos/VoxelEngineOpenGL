@@ -75,6 +75,9 @@
     <ClCompile Include="src\DrawPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\LinearAlgebra.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\glfw3.lib" />
@@ -1013,6 +1016,9 @@
     <ClInclude Include="src\Vertex.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\LinearAlgebra.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\glm\detail\func_common.inl">
@@ -1431,5 +1437,8 @@
     </None>
     <None Include="src\Shaders\fragmentShader.glsl" />
     <None Include="src\Shaders\vertexShader.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="UsedRes.txt" />
   </ItemGroup>
 </Project>

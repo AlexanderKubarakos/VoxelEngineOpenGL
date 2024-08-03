@@ -1,5 +1,9 @@
 #pragma once
+#include <string>
+
 #include "GLFW/glfw3.h"
+
+#include "glm/vec3.hpp"
 
 namespace Utilities
 {
@@ -14,4 +18,6 @@ namespace Utilities
 	};
 	void ProcessFrame(GLFWwindow* t_Window);
 	double GetDeltaTime();
+	std::string vectorToString(glm::vec3 t_Vec);
+	std::string vectorToString(glm::ivec3 t_Vec);
 };
