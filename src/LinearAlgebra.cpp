@@ -27,9 +27,13 @@ bool LinAlg::isChunkInFrustum(const Frustum& t_Frustum, const glm::vec3& t_Pos)
 	for (int i = 0; i < 6; i++)
 	{
 		int out = 0;
-		for (int j = 0; j < 8; j++)
+		bool failed = false;
+		for (int j = 0; j < 8 && !failed; j++)
 		{
-			out += signedDistance(t_Frustum.planes[i], points[j]) < 0 ? 1 : 0;
+			if (signedDistance(t_Frustum.planes[i], points[j]) < 0)
+				out += 1;
+			else
+				failed = true;
 		}
 		if (out == 8)
 			return false;

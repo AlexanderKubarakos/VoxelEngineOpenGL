@@ -12,6 +12,15 @@ uniform mat4 MVP;
 
 float WorldScaler = 1;
 
+vec3 normals[6] = {
+    vec3(0,1,0),
+    vec3(0,-1,0),
+    vec3(0,0,1),
+    vec3(0,0,-1),
+    vec3(1,0,0),
+    vec3(-1,0,0)
+};
+
 void main()
 {
     int x = aPos & 31;
@@ -20,26 +29,7 @@ void main()
     vec3 augmentedPos = vec3(x * WorldScaler, y * WorldScaler, z * WorldScaler) + d_Data.d[gl_DrawID].xyz * 16 * WorldScaler;
     gl_Position = MVP * vec4(augmentedPos, 1.0);
 
-    switch (d_Data.d[gl_DrawID].w)
-    {
-    case 0:
-        normal = vec3(0,1,0);
-        break;
-     case 1:
-        normal = vec3(0,-1,0);
-        break;
-    case 2:
-        normal = vec3(0,0,1);
-        break;
-    case 3:
-        normal = vec3(0,0,-1);
-        break;
-    case 4:
-        normal = vec3(1,0,0);
-        break;
-    case 5:
-        normal = vec3(-1,0,0);
-    }
+    normal = normals[d_Data.d[gl_DrawID].w];
 
     fColor = vec3(1,1,1);
 }

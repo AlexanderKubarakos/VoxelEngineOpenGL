@@ -1,6 +1,7 @@
 #include "Chunk.hpp"
 
 #include <chrono>
+#include <iostream>
 
 Chunk::Chunk(glm::ivec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition(t_ChunkPosition), m_DrawPool(t_DrawPool), m_BucketIDs {nullptr}
 {
@@ -10,9 +11,9 @@ Chunk::Chunk(glm::ivec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition
 		{
 			for (int z = 0; z < 16; z++)
 			{
-				if (rand() % 100 > 80)
+				if (rand() % 100 > 10)
 					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
-				if (y < 8)
+				if (y < 13)
 					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
 			}
 		}

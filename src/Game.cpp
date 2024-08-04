@@ -32,24 +32,24 @@ void Game::Run()
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
 
-	DrawPool pool{ 8*8*8*6, 8096 };
+	DrawPool pool{ 256*6, 3000 };
 
 	std::vector<Chunk> chunks;
 
-	chunks.emplace_back(glm::vec3(0, 0, 0), pool);
-	chunks.back().MeshChunk();
+	//chunks.emplace_back(glm::vec3(0, 0, 0), pool);
+	//chunks.back().MeshChunk();
 
-	chunks.emplace_back(glm::vec3(1, 0, 0), pool);
-	chunks.back().MeshChunk();
-
-	chunks.emplace_back(glm::vec3(-1, 0, 0), pool);
-	chunks.back().MeshChunk();
-
-	chunks.emplace_back(glm::vec3(0, 2, 0), pool);
-	chunks.back().MeshChunk();
-
-	chunks.emplace_back(glm::vec3(2, 2, 0), pool);
-	chunks.back().MeshChunk();
+	for (int x = 0; x < 16; x++)
+	{
+		for (int y = 0; y < 1; y++)
+		{
+			for (int z = 0; z < 16; z++)
+			{
+				chunks.emplace_back(glm::vec3(x, y, z), pool);
+				chunks.back().MeshChunk();
+			}
+		}
+	}
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
@@ -88,10 +88,10 @@ void Game::Run()
 		m_Camera.ProcessInput();
 
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f,16.0f * 16.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f,10000.0f);
         glm::mat4 MVP = projection * m_Camera.GetViewMatrix() * model;
 
-		pool.Render(m_Shader, MVP);
+		pool.Render(MVP);
 
         // End of frame
         Input::ResetInputs(m_Window); // Resets all need inputs

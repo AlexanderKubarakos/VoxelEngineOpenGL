@@ -6,16 +6,19 @@
 
 #include <glm/fwd.hpp>
 
+#include "glad/glad.h"
+
 class Shader
 {
 public:
 	Shader(const char* t_VertexPath, const char* t_FragmentPath);
 
-	void SetBool(const std::string& uniform, bool value) const;
-	void SetInt(const std::string& uniform, int value) const;
-	void SetFloat(const std::string& uniform, float value) const;
-	void SetVec3(const std::string& uniform, glm::vec3& value);
-	void SetMatrix4f(const std::string& uniform, glm::mat4& matrix);
+	GLint getUniformLocation(const std::string& t_Uniform) const;
+	void SetBool(GLint uniform, bool value) const;
+	void SetInt(GLint uniform, int value) const;
+	void SetFloat(GLint uniform, float value) const;
+	void SetVec3(GLint uniform, glm::vec3& value) const;
+	void SetMatrix4f(GLint uniform, glm::mat4& matrix) const;
 
 	void Use() const;
 private:

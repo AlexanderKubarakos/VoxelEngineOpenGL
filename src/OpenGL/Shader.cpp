@@ -98,23 +98,32 @@ void Shader::Use() const
 	glUseProgram(m_Id);
 }
 
-void Shader::SetBool(const std::string& uniform, bool value) const
+GLint Shader::getUniformLocation(const std::string& t_Uniform) const
 {
-	glUniform1i(glGetUniformLocation(m_Id, uniform.c_str()), (int)value);
+	return glGetUniformLocation(m_Id, t_Uniform.c_str());
 }
-void Shader::SetInt(const std::string& uniform, int value) const
+
+void Shader::SetBool(GLint t_Uniform, bool value) const
 {
-	glUniform1i(glGetUniformLocation(m_Id, uniform.c_str()), value);
+	glUniform1i(t_Uniform, (int)value);
 }
-void Shader::SetFloat(const std::string& uniform, float value) const
+
+void Shader::SetInt(GLint t_Uniform, int value) const
 {
-	glUniform1f(glGetUniformLocation(m_Id, uniform.c_str()), value);
+	glUniform1i(t_Uniform, value);
 }
-void Shader::SetVec3(const std::string& uniform, glm::vec3& value)
+
+void Shader::SetFloat(GLint t_Uniform, float value) const
 {
-	glUniform3f(glGetUniformLocation(m_Id, uniform.c_str()), value.x, value.y, value.z);
+	glUniform1f(t_Uniform, value);
 }
-void Shader::SetMatrix4f(const std::string& uniform, glm::mat4& matrix)
+
+void Shader::SetVec3(GLint t_Uniform, glm::vec3& value) const
 {
-	glUniformMatrix4fv(glGetUniformLocation(m_Id, uniform.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
+	glUniform3f(t_Uniform, value.x, value.y, value.z);
+}
+
+void Shader::SetMatrix4f(GLint t_Uniform, glm::mat4& matrix) const
+{
+	glUniformMatrix4fv(t_Uniform, 1, GL_FALSE, glm::value_ptr(matrix));
 }

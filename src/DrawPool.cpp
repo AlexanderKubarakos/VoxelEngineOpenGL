@@ -6,11 +6,12 @@
 
 #include "imgui.h"
 
-DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize)
+DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl")
 {
 	Reserve(t_BucketQuantity, t_BucketSize);
 	GenerateIndices();
 
+	m_MVPUniformLocation = m_Shader.getUniformLocation("MVP");
 	std::fill(m_SideOcclusionOverride.begin(), m_SideOcclusionOverride.end(), true);
 }
 
@@ -59,12 +60,14 @@ void DrawPool::FreeBucket(BucketID t_Id)
 {
 	if (t_Id == nullptr)
 		return;
-
 	// Push to the back of the queue where this bucket starts
 	m_EmptyBuckets.push_front(m_Start + m_IndirectCallList[*t_Id].m_BaseVertex);
 
+	// put the draw call we wish to remove to the back
 	std::swap(m_IndirectCallList[*t_Id], m_IndirectCallList.back());
+	std::swap(m_ExtraChunkDataList[*t_Id], m_ExtraChunkDataList.back());
 	m_IndirectCallList.pop_back();
+	m_ExtraChunkDataList.pop_back();
 	*m_IndirectCallList[*t_Id].m_BucketID = *t_Id;
 	delete t_Id; // Free the memory for the old DAIC pointer
 }
@@ -107,6 +110,11 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 		// Add all bucket pointers to queue
 		m_EmptyBuckets.push_front(m_Start + i * t_BucketSize);
 	}
+
+	m_VAO.Bind();
+	m_IndicesBuffer.BindBuffer(GL_ELEMENT_ARRAY_BUFFER);
+	m_IndirectCallBuffer.BindBuffer(GL_DRAW_INDIRECT_BUFFER);
+	m_ExtraChunkDataBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void DrawPool::UpdateDrawCalls(glm::mat4& t_MVP)
@@ -117,33 +125,25 @@ void DrawPool::UpdateDrawCalls(glm::mat4& t_MVP)
 		{
 			if (!m_SideOcclusionOverride[daic.m_Direction])
 				return false;
+			
 			return LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID] * 16);
 		};
 
-	size_t first = 0; // first element to fail condition
-	while (first < m_IndirectCallList.size() && func(m_IndirectCallList[first]))
-	{
-		first++;
-	}
+	int M = 0;
+	int J = m_IndirectCallList.size() - 1; //Backside Approach
 
-	// Partition all draw calls so that only ones that pass f() are at front and fail f() at back
-	if (first != m_IndirectCallList.size())
-	{
-		for (size_t i = first + 1; i < m_IndirectCallList.size(); i++)
-		{
-			if (func(m_IndirectCallList[i]))
-			{
-				*m_IndirectCallList[first].m_BucketID = i;
-				*m_IndirectCallList[i].m_BucketID = first;
-				std::swap(m_IndirectCallList[first], m_IndirectCallList[i]);
-				std::swap(m_ExtraChunkDataList[first], m_ExtraChunkDataList[i]);
-				first++;
-			}
-		}
+	//Execute Sorting Pass
+	while (M <= J) {
+		while (func(m_IndirectCallList[M]) && M < J) M++;
+		while (!func(m_IndirectCallList[J]) && M < J) J--;
+		*m_IndirectCallList[M].m_BucketID = J;
+		*m_IndirectCallList[J].m_BucketID = M;
+		std::swap(m_ExtraChunkDataList[M], m_ExtraChunkDataList[J]);
+		std::swap(m_IndirectCallList[M++], m_IndirectCallList[J--]);
 	}
 
 	// Tell GPU to only run draw calls for the DAICs on left of the partition. All others won't be drawn
-	m_DrawCallLength = first;
+	m_DrawCallLength = M;
 	m_IndirectCallBuffer.SetBufferData<DAIC>(m_IndirectCallList, GL_DYNAMIC_DRAW);
 	m_ExtraChunkDataBuffer.SetBufferData<glm::ivec4>(m_ExtraChunkDataList, GL_DYNAMIC_DRAW);
 }
@@ -164,17 +164,13 @@ void DrawPool::GenerateIndices()
 	m_IndicesBuffer.SetBufferData<GLuint>(indices);
 }
 
-void DrawPool::Render(Shader& t_Shader, glm::mat4& t_MVP)
+void DrawPool::Render(glm::mat4& t_MVP)
 {
 	UpdateDrawCalls(t_MVP);
 
-	t_Shader.Use();
-	t_Shader.SetMatrix4f("MVP", t_MVP);
+	m_Shader.Use();
+	m_Shader.SetMatrix4f(m_MVPUniformLocation, t_MVP);
 	m_VAO.Bind();
-	m_IndicesBuffer.BindBuffer(GL_ELEMENT_ARRAY_BUFFER);
-	m_IndirectCallBuffer.BindBuffer(GL_DRAW_INDIRECT_BUFFER);
-	m_ExtraChunkDataBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 0);
-
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(m_DrawCallLength), sizeof(DAIC));
 }
 

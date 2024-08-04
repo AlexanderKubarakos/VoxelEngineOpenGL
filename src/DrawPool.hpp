@@ -29,7 +29,7 @@ public:
 	// Free a bucket, add it back to the queue to be filled, and delete its draw call
 	void FreeBucket(BucketID t_Id);
 	// Render all meshes in pool
-	void Render(Shader& t_Shader, glm::mat4& t_MVP);
+	void Render(glm::mat4& t_MVP);
 	// Show Debug Data
 	void Debug();
 private:
@@ -74,6 +74,9 @@ private:
 	Buffer m_IndicesBuffer;
 	Buffer m_IndirectCallBuffer;
 	Buffer m_ExtraChunkDataBuffer;
+
+	Shader m_Shader;
+	GLint m_MVPUniformLocation;
 
 	std::vector<DAIC> m_IndirectCallList;
 	std::vector<glm::ivec4> m_ExtraChunkDataList;
