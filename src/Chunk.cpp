@@ -13,7 +13,7 @@ Chunk::Chunk(glm::ivec3 t_ChunkPosition, DrawPool& t_DrawPool) : m_ChunkPosition
 			{
 				if (rand() % 100 > 10)
 					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
-				if (y < 13)
+				//if (y < 13)
 					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
 			}
 		}

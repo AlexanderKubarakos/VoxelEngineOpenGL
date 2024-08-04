@@ -126,7 +126,7 @@ void DrawPool::UpdateDrawCalls(glm::mat4& t_MVP)
 			if (!m_SideOcclusionOverride[daic.m_Direction])
 				return false;
 			
-			return LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID] * 16);
+			return LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID]);
 		};
 
 	int M = 0;
