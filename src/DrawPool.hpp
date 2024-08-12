@@ -29,7 +29,7 @@ public:
 	// Free a bucket, add it back to the queue to be filled, and delete its draw call
 	void FreeBucket(BucketID t_Id);
 	// Render all meshes in pool
-	void Render(glm::mat4& t_MVP);
+	void Render(const glm::mat4& t_MVP, const glm::mat4& t_MV);
 	// Show Debug Data
 	void Debug();
 private:
@@ -82,7 +82,7 @@ private:
 	std::vector<glm::ivec4> m_ExtraChunkDataList;
 
 	void Reserve(size_t t_BucketQuantity, size_t t_BucketSize); // Allocates memory in back end for pool
-	void UpdateDrawCalls(glm::mat4& t_MVP); // Resorts draw call (DAIC) and re-uploads all data to GPU so that draw calls are correct
+	void UpdateDrawCalls(const glm::mat4& t_MVP); // Resorts draw call (DAIC) and re-uploads all data to GPU so that draw calls are correct
 	void GenerateIndices(); // Update index buffer, every 4 vertices we need to generate 6 indices
 
 	// Debug Data

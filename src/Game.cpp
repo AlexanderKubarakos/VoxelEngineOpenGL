@@ -20,8 +20,6 @@ void Game::Stop()
 	ImGui::DestroyContext();
 }
 
-// TODO: add debug drawing, so that you can declare in a macro maybe LineSegment(glm::vec3, glm::vec3, glm::vec3 color);
-
 void Game::Run()
 {
 	bool showDemoWindow = false;
@@ -32,18 +30,18 @@ void Game::Run()
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
 
-	DrawPool pool{ 256*6, 3000 };
+	DrawPool pool{ 1024*6, 4000 };
 
 	std::vector<Chunk> chunks;
 
 	//chunks.emplace_back(glm::vec3(0, 0, 0), pool);
 	//chunks.back().MeshChunk();
 
-	for (int x = 0; x < 16; x++)
+	for (int x = -7; x < 8; x++)
 	{
-		for (int y = 0; y < 1; y++)
+		for (int y = -2; y < 2; y++)
 		{
-			for (int z = 0; z < 16; z++)
+			for (int z = -7; z < 8; z++)
 			{
 				chunks.emplace_back(glm::vec3(x, y, z), pool);
 				chunks.back().MeshChunk();
@@ -91,7 +89,7 @@ void Game::Run()
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f,10000.0f);
         glm::mat4 MVP = projection * m_Camera.GetViewMatrix() * model;
 
-		pool.Render(MVP);
+		pool.Render(MVP, m_Camera.GetViewMatrix() * model);
 
         // End of frame
         Input::ResetInputs(m_Window); // Resets all need inputs
@@ -110,7 +108,3 @@ void Game::Run()
 
 	}
 }
-
-// TODO: add normal information
-// and add some lighting
-

@@ -26,12 +26,16 @@ DrawPool::~DrawPool()
 // t_Size is vertex count
 DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 {
-	if (t_Size < 1 || t_Size > m_BucketSize || m_EmptyBuckets.empty())
+	if (t_Size > m_BucketSize || m_EmptyBuckets.empty())
 	{
 		std::cerr << "Error: While trying to allocate bucket, out of buckets, or requesting no space in bucket. Buckets Left: " << m_EmptyBuckets.size() << '\n';
 		return nullptr;
 	}
 		
+	// TODO: handle empty buckets, dont waste a draw call
+	// Perhaps have if the chunk mesh is empty dont even try to allocate bucket
+	if (t_Size < 1)
+		std::cout << "Trying to allocate an empty bucket, ok but like don't do that...\n";
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
 	m_IndirectCallList.emplace_back(t_Size/4 * 6, 1, 0, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
@@ -117,7 +121,7 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	m_ExtraChunkDataBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void DrawPool::UpdateDrawCalls(glm::mat4& t_MVP)
+void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP)
 {
 	auto frustum = LinAlg::frustumExtraction(t_MVP);
 	// Sort draw calls
@@ -164,12 +168,13 @@ void DrawPool::GenerateIndices()
 	m_IndicesBuffer.SetBufferData<GLuint>(indices);
 }
 
-void DrawPool::Render(glm::mat4& t_MVP)
+void DrawPool::Render(const glm::mat4& t_MVP, const glm::mat4& t_MV)
 {
 	UpdateDrawCalls(t_MVP);
 
 	m_Shader.Use();
 	m_Shader.SetMatrix4f(m_MVPUniformLocation, t_MVP);
+	m_Shader.SetMatrix4f(m_Shader.getUniformLocation("MV"), t_MV);
 	m_VAO.Bind();
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(m_DrawCallLength), sizeof(DAIC));
 }

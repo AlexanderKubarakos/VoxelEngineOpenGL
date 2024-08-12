@@ -123,7 +123,7 @@ void Shader::SetVec3(GLint t_Uniform, glm::vec3& value) const
 	glUniform3f(t_Uniform, value.x, value.y, value.z);
 }
 
-void Shader::SetMatrix4f(GLint t_Uniform, glm::mat4& matrix) const
+void Shader::SetMatrix4f(GLint t_Uniform, const glm::mat4& matrix) const
 {
 	glUniformMatrix4fv(t_Uniform, 1, GL_FALSE, glm::value_ptr(matrix));
 }
