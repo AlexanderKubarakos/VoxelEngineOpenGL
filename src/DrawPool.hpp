@@ -28,6 +28,7 @@ public:
 	void FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::ivec4& t_ExtraData);
 	// Free a bucket, add it back to the queue to be filled, and delete its draw call
 	void FreeBucket(BucketID t_Id);
+	void FreeBucket(std::array<DrawPool::BucketID, 6>& t_Buckets);
 	// Render all meshes in pool
 	void Render(const glm::mat4& t_MVP, const glm::mat4& t_MV);
 	// Show Debug Data

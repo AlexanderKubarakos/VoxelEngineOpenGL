@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "ChunkManager.hpp"
 #include "DrawPool.hpp"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -30,12 +31,7 @@ void Game::Run()
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
 
-	DrawPool pool{ 1024*6, 4000 };
-
-	std::vector<Chunk> chunks;
-
-	//chunks.emplace_back(glm::vec3(0, 0, 0), pool);
-	//chunks.back().MeshChunk();
+	ChunkManager chunkManger;
 
 	for (int x = -7; x < 8; x++)
 	{
@@ -43,8 +39,7 @@ void Game::Run()
 		{
 			for (int z = -7; z < 8; z++)
 			{
-				chunks.emplace_back(glm::vec3(x, y, z), pool);
-				chunks.back().MeshChunk();
+				chunkManger.AddChunk(glm::vec3(x, y, z));
 			}
 		}
 	}
@@ -71,7 +66,7 @@ void Game::Run()
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
 
-		pool.Debug();
+		chunkManger.ShowDebugInfo();
 
 		// Swap wireframe
 		if (Input::IsKeyPressed(GLFW_KEY_X))
@@ -84,12 +79,10 @@ void Game::Run()
 		}
 
 		m_Camera.ProcessInput();
-
-        glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f,10000.0f);
-        glm::mat4 MVP = projection * m_Camera.GetViewMatrix() * model;
 
-		pool.Render(MVP, m_Camera.GetViewMatrix() * model);
+		chunkManger.MeshChunks();
+		chunkManger.RenderChunks(m_Camera, projection);
 
         // End of frame
         Input::ResetInputs(m_Window); // Resets all need inputs

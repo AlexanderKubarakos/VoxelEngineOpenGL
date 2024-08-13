@@ -15,9 +15,9 @@ void main()
     float Ka = 1;   // Ambient reflection coefficient
     float Kd = 1;   // Diffuse reflection coefficient
     float Ks = 1;   // Specular reflection coefficient
-    float shininessVal = 80; // Shininess
+    float shininessVal = 64; // Shininess
 
-    vec3 L = normalize(vec3(100,32,100) - vertPos);
+    vec3 L = normalize(vec3(100,100,100) - vertPos);
     vec3 N = normalize(normal);
 
     float lambertian = max(dot(N, L), 0.0);

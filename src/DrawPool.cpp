@@ -76,6 +76,15 @@ void DrawPool::FreeBucket(BucketID t_Id)
 	delete t_Id; // Free the memory for the old DAIC pointer
 }
 
+void DrawPool::FreeBucket(std::array<DrawPool::BucketID, 6>& t_Buckets)
+{
+	for (auto& id : t_Buckets)
+	{
+		FreeBucket(id);
+		id = nullptr;
+	}
+}
+
 // Bucket Size is vertex count
 void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 {
@@ -134,7 +143,7 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP)
 		};
 
 	int M = 0;
-	int J = m_IndirectCallList.size() - 1; //Backside Approach
+	int J = static_cast<int>(m_IndirectCallList.size() - 1); //Backside Approach
 
 	//Execute Sorting Pass
 	while (M <= J) {

@@ -19,21 +19,33 @@ public:
 	void ProcessInput()
 	{
 		float dt = static_cast<float>(Utilities::GetDeltaTime());
+		float sprint = 1.0f;
+		if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT))
+			sprint += 2.0f;
+
 		if (Input::IsKeyDown(GLFW_KEY_W))
 		{
-			m_CameraPos += dt * m_MoveSpeed * m_CameraFront;
+			m_CameraPos += dt * m_MoveSpeed * m_CameraFront * sprint;
 		}
 		if (Input::IsKeyDown(GLFW_KEY_S))
 		{
-			m_CameraPos -= dt * m_MoveSpeed * m_CameraFront;
+			m_CameraPos -= dt * m_MoveSpeed * m_CameraFront * sprint;
 		}
 		if (Input::IsKeyDown(GLFW_KEY_A))
 		{
-			m_CameraPos -= dt * glm::normalize(glm::cross(m_CameraFront, m_CameraUp)) * m_MoveSpeed;
+			m_CameraPos -= dt * glm::normalize(glm::cross(m_CameraFront, m_CameraUp)) * m_MoveSpeed * sprint;
 		}
 		if (Input::IsKeyDown(GLFW_KEY_D))
 		{
-			m_CameraPos += dt * glm::normalize(glm::cross(m_CameraFront, m_CameraUp)) * m_MoveSpeed;
+			m_CameraPos += dt * glm::normalize(glm::cross(m_CameraFront, m_CameraUp)) * m_MoveSpeed * sprint;
+		}
+		if (Input::IsKeyDown(GLFW_KEY_Q))
+		{
+			m_CameraPos += dt * glm::normalize(m_CameraUp) * m_MoveSpeed;
+		}
+		if (Input::IsKeyDown(GLFW_KEY_E))
+		{
+			m_CameraPos -= dt * glm::normalize(m_CameraUp) * m_MoveSpeed;
 		}
 
 		// Update rotation from mouse

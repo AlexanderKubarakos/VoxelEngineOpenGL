@@ -145,6 +145,7 @@
     <ClCompile Include="includes\glm\detail\glm.cpp" />
     <ClCompile Include="includes\glm\glm.cppm" />
     <ClCompile Include="src\Chunk.cpp" />
+    <ClCompile Include="src\ChunkManager.cpp" />
     <ClCompile Include="src\DrawPool.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\LinearAlgebra.cpp" />
@@ -462,6 +463,7 @@
     <ClInclude Include="includes\glm\vector_relational.hpp" />
     <ClInclude Include="includes\KHR\khrplatform.h" />
     <ClInclude Include="src\Chunk.hpp" />
+    <ClInclude Include="src\ChunkManager.hpp" />
     <ClInclude Include="src\DrawPool.hpp" />
     <ClInclude Include="src\Input.hpp" />
     <ClInclude Include="src\LinearAlgebra.hpp" />

@@ -4,6 +4,13 @@
 #include "GLFW/glfw3.h"
 
 #include "glm/vec3.hpp"
+#include <chrono>
+#include <iostream>
+
+#define TIMER_START(ID) auto timerStart##ID = std::chrono::high_resolution_clock::now();
+#define TIMER_END(ID, Message) auto timerEnd##ID = std::chrono::high_resolution_clock::now(); \
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(timerEnd##ID-timerStart##ID); \
+	std::cout << (Message) << microseconds.count() << " microseconds\n";
 
 namespace Utilities
 {
