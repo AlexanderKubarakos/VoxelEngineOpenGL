@@ -30,7 +30,7 @@ public:
 	// Position of chunk relative to other chunk
 	glm::ivec3 m_ChunkPosition;
 	// Data for voxels, 16^3
-	std::unique_ptr<int8_t[]> m_BlockData; 
+	std::shared_ptr<int8_t[]> m_BlockData; 
 	// Bucket ID of supplied DrawPool
 	std::array<DrawPool::BucketID, 6> m_BucketIDs;
 };

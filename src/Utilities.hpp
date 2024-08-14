@@ -12,6 +12,14 @@
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(timerEnd##ID-timerStart##ID); \
 	std::cout << (Message) << microseconds.count() << " microseconds\n";
 
+#if _DEBUG 
+#define LOG_PRINT(Message) std::cerr << Message << '\n';
+#define ERROR_PRINT(Message) std::cerr << Message << '\n';
+#else
+#define LOG_PRINT(Message) 
+#define ERROR_PRINT(Message) 
+#endif
+
 namespace Utilities
 {
 	enum DIRECTION

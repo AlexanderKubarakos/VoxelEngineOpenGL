@@ -28,14 +28,18 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 {
 	if (t_Size > m_BucketSize || m_EmptyBuckets.empty())
 	{
-		std::cerr << "Error: While trying to allocate bucket, out of buckets, or requesting no space in bucket. Buckets Left: " << m_EmptyBuckets.size() << '\n';
+		ERROR_PRINT("Error: While trying to allocate bucket, out of buckets, or requesting no space in bucket. Buckets Left: " << m_EmptyBuckets.size())
 		return nullptr;
 	}
 		
 	// TODO: handle empty buckets, dont waste a draw call
 	// Perhaps have if the chunk mesh is empty dont even try to allocate bucket
 	if (t_Size < 1)
-		std::cout << "Trying to allocate an empty bucket, ok but like don't do that...\n";
+	{
+		ERROR_PRINT("Trying to allocate an empty bucket, not allocating a bucket, DAIC or BucketID")
+		return nullptr;
+	}
+		
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
 	m_IndirectCallList.emplace_back(t_Size/4 * 6, 1, 0, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
@@ -48,7 +52,14 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Util
 {
 	if (t_Data.size() > m_BucketSize)
 	{
-		std::cerr << "Error: Trying to over fill bucket. Bucket Length: " << m_BucketSize << " and Data Length: " << t_Data.size() << '\n';
+		ERROR_PRINT("Error: Trying to over fill bucket. Bucket Length: " << m_BucketSize << " and Data Length: " << t_Data.size())
+		return;
+	}
+
+	if (t_Id == nullptr)
+	{
+		ERROR_PRINT("Warning: Trying to fill a bucket with a nullptr ID, perhaps intentional")
+		return;
 	}
 		
 	// find start of the bucket for t_Id, m.BaseVertex is relative to m_Start

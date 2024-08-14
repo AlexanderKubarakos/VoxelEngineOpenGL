@@ -66,6 +66,33 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	auto& chunk = *itr;
 	auto& blockData = chunk.m_BlockData;
 
+	std::array<std::shared_ptr<int8_t[]>, 6> neighbors;
+
+	auto otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 1, 0));
+	if (otherChunk != m_Chunks.end())
+		neighbors[Utilities::UP] = otherChunk->m_BlockData;
+
+	otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, -1, 0));
+	if (otherChunk != m_Chunks.end())
+		neighbors[Utilities::DOWN] = otherChunk->m_BlockData;
+
+	otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 0, 1));
+	if (otherChunk != m_Chunks.end())
+		neighbors[Utilities::SOUTH] = otherChunk->m_BlockData;
+
+	otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 0, -1));
+	if (otherChunk != m_Chunks.end())
+		neighbors[Utilities::NORTH] = otherChunk->m_BlockData;
+
+	otherChunk = GetChunk(t_ToMesh + glm::ivec3(1, 0, 0));
+	if (otherChunk != m_Chunks.end())
+		neighbors[Utilities::EAST] = otherChunk->m_BlockData;
+
+	otherChunk = GetChunk(t_ToMesh + glm::ivec3(-1, 0, 0));
+	if (otherChunk != m_Chunks.end())
+		neighbors[Utilities::WEST] = otherChunk->m_BlockData;
+	
+
 	for (auto id : chunk.m_BucketIDs)
 	{
 		if (id != nullptr)
@@ -73,6 +100,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 			m_DrawPool.FreeBucket(id);
 		}
 	}
+
 	std::array<std::vector<Vertex>, 6> vertexData;
 
 	// xy plane, facing -layerZ
@@ -84,12 +112,18 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		{
 			for (int layerX = 0; layerX < 16; layerX++)
 			{
-				// find a valid block, that hasn't been meshed yet,
+				// find a block, that hasn't been meshed yet,
 				// TODO: add check here for if voxels face should be shown, so we skip non visible
 				if (blockData[layerX + layerY * 16 + layerZ * 16 * 16] > 0 && !((bitmap[layerY] >> layerX) & 0x1))
 				{
+					// TODO: maybe move this to upper if statement
 					if (layerZ != 0 && blockData[layerX + layerY * 16 + (layerZ - 1) * 16 * 16] != 0)
 						continue;
+
+					// maybe mark it on the bitmap? to speed up later code
+					if (layerZ == 0 && neighbors[Utilities::NORTH] && neighbors[Utilities::NORTH][layerX + layerY * 16 + 15 * 16 * 16] != 0)
+						continue;
+
 					// Looking at voxel at [layerX, layerY]
 					int voxelType = blockData[layerX + layerY * 16 + layerZ * 16 * 16];
 					//TODO: do optimization by moving layerX by lengthX, just an easy skip, remember that we layerX++, but maybe that should be removed?
@@ -109,7 +143,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 
 						if (blockData[subX + layerY * 16 + layerZ * 16 * 16] != voxelType // this part of row is not same voxel
 							|| (bitmap[layerY] >> subX) & 0x1 // this part of row is already in a mesh
-							|| (layerZ != 0 && blockData[subX + layerY * 16 + (layerZ - 1) * 16 * 16] != 0)) // this parts side is blocked off
+							|| (layerZ != 0 && blockData[subX + layerY * 16 + (layerZ - 1) * 16 * 16] != 0) // this parts side is blocked off
+							|| (layerZ == 0 && neighbors[Utilities::NORTH] && neighbors[Utilities::NORTH][subX + layerY * 16 + 15 * 16 * 16] != 0))
 						{
 							lengthX = subX - layerX;
 							break;
@@ -135,7 +170,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 							// demorgans law here to allow short circuit might help
 							if (blockData[subX + subY * 16 + layerZ * 16 * 16] != voxelType
 								|| ((bitmap[subY] >> subX) & 0x1)
-								|| (layerZ != 0 && blockData[subX + subY * 16 + (layerZ - 1) * 16 * 16] != 0))
+								|| (layerZ != 0 && blockData[subX + subY * 16 + (layerZ - 1) * 16 * 16] != 0)
+								|| (layerZ == 0 && neighbors[Utilities::NORTH] && neighbors[Utilities::NORTH][subX + subY * 16 + 15 * 16 * 16] != 0))
 							{
 								completeRow = false;
 								break;
@@ -184,6 +220,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					if (layerZ != 15 && blockData[layerX + layerY * 16 + (layerZ + 1) * 16 * 16] != 0)
 						continue;
 
+					if (layerZ == 15 && neighbors[Utilities::SOUTH] && neighbors[Utilities::SOUTH][layerX + layerY * 16 + 0 * 16 * 16] != 0)
+						continue;
+
 					int voxelType = blockData[layerX + layerY * 16 + layerZ * 16 * 16];
 
 					bitmap[layerY] |= 0x1 << layerX;
@@ -193,7 +232,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					{
 						if (blockData[subX + layerY * 16 + layerZ * 16 * 16] != voxelType
 							|| (bitmap[layerY] >> subX) & 0x1
-							|| (layerZ != 15 && blockData[subX + layerY * 16 + (layerZ + 1) * 16 * 16] != 0))
+							|| (layerZ != 15 && blockData[subX + layerY * 16 + (layerZ + 1) * 16 * 16] != 0)
+							|| (layerZ == 15 && neighbors[Utilities::SOUTH] && neighbors[Utilities::SOUTH][subX + layerY * 16 + 0 * 16 * 16] != 0))
 						{
 							lengthX = subX - layerX;
 							break;
@@ -216,7 +256,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						{
 							if (blockData[subX + subY * 16 + layerZ * 16 * 16] != voxelType
 								|| ((bitmap[subY] >> subX) & 0x1)
-								|| (layerZ != 15 && blockData[subX + subY * 16 + (layerZ + 1) * 16 * 16] != 0))
+								|| (layerZ != 15 && blockData[subX + subY * 16 + (layerZ + 1) * 16 * 16] != 0)
+								|| (layerZ == 15 && neighbors[Utilities::SOUTH] && neighbors[Utilities::SOUTH][subX + subY * 16 + 0 * 16 * 16] != 0))
 							{
 								completeRow = false;
 								break;
@@ -255,8 +296,6 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	// xz plane, facing +y
 	for (int layerY = 0; layerY < 16; layerY++)
 	{
-		if (layerY == 1)
-			layerY = 1;
 		int16_t bitmap[16] = { 0 };
 		for (int layerZ = 0; layerZ < 16; layerZ++)
 		{
@@ -265,6 +304,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 				if (blockData[layerX + layerY * 16 + layerZ * 16 * 16] > 0 && !((bitmap[layerZ] >> layerX) & 0x1))
 				{
 					if (layerY != 15 && blockData[layerX + (layerY + 1) * 16 + layerZ * 16 * 16] != 0)
+						continue;
+
+					if (layerY == 15 && neighbors[Utilities::UP] && neighbors[Utilities::UP][layerX + 0 * 16 + layerZ * 16 * 16] != 0)
 						continue;
 
 					int voxelType = blockData[layerX + layerY * 16 + layerZ * 16 * 16];
@@ -276,7 +318,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					{
 						if (blockData[subX + layerY * 16 + layerZ * 16 * 16] != voxelType
 							|| (bitmap[layerZ] >> subX) & 0x1
-							|| (layerY != 15 && blockData[subX + (layerY + 1) * 16 + layerZ * 16 * 16] != 0))
+							|| (layerY != 15 && blockData[subX + (layerY + 1) * 16 + layerZ * 16 * 16] != 0)
+							|| (layerY == 15 && neighbors[Utilities::UP] && neighbors[Utilities::UP][subX + 0 * 16 + layerZ * 16 * 16] != 0))
 						{
 							lengthX = subX - layerX;
 							break;
@@ -299,7 +342,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						{
 							if (blockData[subX + layerY * 16 + subZ * 16 * 16] != voxelType
 								|| ((bitmap[subZ] >> subX) & 0x1)
-								|| (layerY != 15 && blockData[subX + (layerY + 1) * 16 + subZ * 16 * 16] != 0))
+								|| (layerY != 15 && blockData[subX + (layerY + 1) * 16 + subZ * 16 * 16] != 0)
+								|| (layerY == 15 && neighbors[Utilities::UP] && neighbors[Utilities::UP][subX + 0 * 16 + subZ * 16 * 16] != 0))
 							{
 								completeRow = false;
 								break;
@@ -348,6 +392,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					if (layerY != 0 && blockData[layerX + (layerY - 1) * 16 + layerZ * 16 * 16] != 0)
 						continue;
 
+					if (layerY == 0 && neighbors[Utilities::DOWN] && neighbors[Utilities::DOWN][layerX + 15 * 16 + layerZ * 16 * 16] != 0)
+						continue;
+
 					int voxelType = blockData[layerX + layerY * 16 + layerZ * 16 * 16];
 
 					bitmap[layerZ] |= 0x1 << layerX;
@@ -357,7 +404,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					{
 						if (blockData[subX + layerY * 16 + layerZ * 16 * 16] != voxelType
 							|| (bitmap[layerZ] >> subX) & 0x1
-							|| (layerY != 0 && blockData[subX + (layerY - 1) * 16 + layerZ * 16 * 16] != 0))
+							|| (layerY != 0 && blockData[subX + (layerY - 1) * 16 + layerZ * 16 * 16] != 0)
+							|| (layerY == 0 && neighbors[Utilities::DOWN] && neighbors[Utilities::DOWN][subX + 15 * 16 + layerZ * 16 * 16] != 0))
 						{
 							lengthX = subX - layerX;
 							break;
@@ -380,7 +428,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						{
 							if (blockData[subX + layerY * 16 + subZ * 16 * 16] != voxelType
 								|| ((bitmap[subZ] >> subX) & 0x1)
-								|| (layerY != 0 && blockData[subX + (layerY - 1) * 16 + subZ * 16 * 16] != 0))
+								|| (layerY != 0 && blockData[subX + (layerY - 1) * 16 + subZ * 16 * 16] != 0)
+								|| (layerY == 0 && neighbors[Utilities::DOWN] && neighbors[Utilities::DOWN][subX + 15 * 16 + subZ * 16 * 16] != 0))
 							{
 								completeRow = false;
 								break;
@@ -428,6 +477,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					if (layerX != 15 && blockData[(layerX + 1) + layerY * 16 + layerZ * 16 * 16] != 0)
 						continue;
 
+					if (layerX == 15 && neighbors[Utilities::EAST] && neighbors[Utilities::EAST][0 + layerY * 16 + layerZ * 16 * 16] != 0)
+						continue;
+
 					int voxelType = blockData[layerX + layerY * 16 + layerZ * 16 * 16];
 
 					bitmap[layerZ] |= 0x1 << layerY;
@@ -437,7 +489,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					{
 						if (blockData[layerX + subY * 16 + layerZ * 16 * 16] != voxelType
 							|| (bitmap[layerZ] >> subY) & 0x1
-							|| (layerX != 15 && blockData[(layerX + 1) + subY * 16 + layerZ * 16 * 16] != 0))
+							|| (layerX != 15 && blockData[(layerX + 1) + subY * 16 + layerZ * 16 * 16] != 0)
+							|| (layerX == 15 && neighbors[Utilities::EAST] && neighbors[Utilities::EAST][0 + subY * 16 + layerZ * 16 * 16] != 0))
 						{
 							lengthY = subY - layerY;
 							break;
@@ -460,7 +513,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						{
 							if (blockData[layerX + subY * 16 + subZ * 16 * 16] != voxelType
 								|| ((bitmap[subZ] >> subY) & 0x1)
-								|| (layerX != 15 && blockData[(layerX + 1) + subY * 16 + subZ * 16 * 16] != 0))
+								|| (layerX != 15 && blockData[(layerX + 1) + subY * 16 + subZ * 16 * 16] != 0)
+								|| (layerX == 15 && neighbors[Utilities::EAST] && neighbors[Utilities::EAST][0 + subY * 16 + subZ * 16 * 16] != 0))
 							{
 								completeRow = false;
 								break;
@@ -509,6 +563,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					if (layerX != 0 && blockData[(layerX - 1) + layerY * 16 + layerZ * 16 * 16] != 0)
 						continue;
 
+					if (layerX == 0 && neighbors[Utilities::WEST] && neighbors[Utilities::WEST][15 + layerY * 16 + layerZ * 16 * 16] != 0)
+						continue;
+
 					int voxelType = blockData[layerX + layerY * 16 + layerZ * 16 * 16];
 
 					bitmap[layerZ] |= 0x1 << layerY;
@@ -518,7 +575,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					{
 						if (blockData[layerX + subY * 16 + layerZ * 16 * 16] != voxelType
 							|| (bitmap[layerZ] >> subY) & 0x1
-							|| (layerX != 0 && blockData[(layerX - 1) + subY * 16 + layerZ * 16 * 16] != 0))
+							|| (layerX != 0 && blockData[(layerX - 1) + subY * 16 + layerZ * 16 * 16] != 0)
+							|| (layerX == 0 && neighbors[Utilities::WEST] && neighbors[Utilities::WEST][15 + subY * 16 + layerZ * 16 * 16] != 0))
 						{
 							lengthY = subY - layerY;
 							break;
@@ -541,7 +599,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						{
 							if (blockData[layerX + subY * 16 + subZ * 16 * 16] != voxelType
 								|| ((bitmap[subZ] >> subY) & 0x1)
-								|| (layerX != 0 && blockData[(layerX - 1) + subY * 16 + subZ * 16 * 16] != 0))
+								|| (layerX != 0 && blockData[(layerX - 1) + subY * 16 + subZ * 16 * 16] != 0)
+								|| (layerX == 0 && neighbors[Utilities::WEST] && neighbors[Utilities::WEST][15 + subY * 16 + subZ * 16 * 16] != 0))
 							{
 								completeRow = false;
 								break;

@@ -2,9 +2,9 @@
 
 #include "FastNoiseLite.h"
 
-Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ std::make_unique<int8_t[]>(4096) }, m_BucketIDs{ nullptr }
+Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ std::make_shared<int8_t[]>(4096)}, m_BucketIDs{nullptr}
 {
-	FastNoiseLite f{ 3333 };
+	FastNoiseLite f{ 4444 };
 	
 	for (int x = 0; x < 16; x++)
 	{
