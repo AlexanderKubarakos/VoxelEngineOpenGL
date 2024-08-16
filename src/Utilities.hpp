@@ -17,7 +17,7 @@
 #define ERROR_PRINT(Message) std::cerr << Message << '\n';
 #else
 #define LOG_PRINT(Message) 
-#define ERROR_PRINT(Message) 
+#define ERROR_PRINT(Message)
 #endif
 
 namespace Utilities

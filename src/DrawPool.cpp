@@ -31,15 +31,12 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 		ERROR_PRINT("Error: While trying to allocate bucket, out of buckets, or requesting no space in bucket. Buckets Left: " << m_EmptyBuckets.size())
 		return nullptr;
 	}
-		
-	// TODO: handle empty buckets, dont waste a draw call
-	// Perhaps have if the chunk mesh is empty dont even try to allocate bucket
+
 	if (t_Size < 1)
 	{
 		ERROR_PRINT("Trying to allocate an empty bucket, not allocating a bucket, DAIC or BucketID")
 		return nullptr;
 	}
-		
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
 	m_IndirectCallList.emplace_back(t_Size/4 * 6, 1, 0, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));

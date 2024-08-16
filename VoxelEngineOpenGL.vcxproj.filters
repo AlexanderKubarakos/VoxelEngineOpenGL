@@ -1025,6 +1025,9 @@
     <ClInclude Include="src\ChunkManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\FastNoiseLite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\glm\detail\func_common.inl">

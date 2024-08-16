@@ -41,4 +41,5 @@ private:
 	DrawPool m_DrawPool;
 	std::vector<Chunk> m_Chunks;
 	std::deque<glm::ivec3> m_MeshingQueue;
+	bool m_Sorted;
 };

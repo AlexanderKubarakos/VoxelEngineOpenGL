@@ -3,7 +3,7 @@
 #include <algorithm>
 
 
-ChunkManager::ChunkManager() : m_DrawPool(8192, 4096)
+ChunkManager::ChunkManager() : m_DrawPool(8192, 4096), m_Sorted {false}
 {
 
 }
@@ -14,6 +14,7 @@ void ChunkManager::AddChunk(const glm::ivec3& t_ChunkPosition)
 {
 	m_Chunks.emplace_back(t_ChunkPosition);
 	m_MeshingQueue.emplace_back(t_ChunkPosition);
+	m_Sorted = false;
 }
 
 void ChunkManager::RemoveChunk(const glm::ivec3& t_ChunkPosition)
@@ -27,11 +28,11 @@ void ChunkManager::RemoveChunk(const glm::ivec3& t_ChunkPosition)
 
 	std::iter_swap(toRemove, --m_Chunks.end());
 	m_Chunks.pop_back();
+	m_Sorted = false;
 }
 
 void ChunkManager::MeshChunks()
 {
-	//TODO: maybe sort before meshing?
 	while (!m_MeshingQueue.empty())
 	{
 		MeshChunk(m_MeshingQueue.front());
@@ -51,7 +52,27 @@ void ChunkManager::ShowDebugInfo()
 
 std::vector<Chunk>::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPosition)
 {
-	//TODO: make a way better implementation of this
+	if (!m_Sorted)
+	{
+		std::sort(m_Chunks.begin(), m_Chunks.end(), [](const Chunk& first, const Chunk& last) {
+			auto& lh = first.m_ChunkPosition;
+			auto& rh = last.m_ChunkPosition;
+			return lh.x != rh.x ?
+				lh.x < rh.x
+				: lh.y != rh.y ?
+				lh.y < rh.y
+				: lh.z < rh.z; });
+		m_Sorted = true;
+	}
+
+	return std::lower_bound(m_Chunks.begin(), m_Chunks.end(), t_ChunkPosition, [](const Chunk& first, const glm::ivec3& rh) {
+		auto& lh = first.m_ChunkPosition;
+		return lh.x != rh.x ?
+			lh.x < rh.x
+			: lh.y != rh.y ?
+			lh.y < rh.y
+			: lh.z < rh.z; });
+
 	auto chunkComparator = [t_ChunkPosition](const Chunk& t_Chunk) { return t_ChunkPosition == t_Chunk.m_ChunkPosition; };
 	return std::ranges::find_if(m_Chunks.begin(), m_Chunks.end(), chunkComparator);
 }
