@@ -99,10 +99,10 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		return;
 
 	auto& chunk = *itr;
-	auto blockData = chunk.m_BlockData.get();
+	auto blockData = chunk.m_BlockData;
 	auto& buckets = chunk.m_BucketIDs;
 
-	std::array<std::shared_ptr<int8_t[]>, 6> neighbors;
+	std::array<int8_t*, 6> neighbors {nullptr};
 
 	auto otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 1, 0));
 	if (otherChunk != m_Chunks.end())

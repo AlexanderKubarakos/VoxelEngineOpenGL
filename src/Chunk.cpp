@@ -2,10 +2,10 @@
 
 #include "FastNoiseLite.h"
 
-Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ std::make_shared<int8_t[]>(4096)}, m_BucketIDs{nullptr}
+Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ new int8_t[4096]() }, m_BucketIDs{nullptr}
 {
 	FastNoiseLite f{ 4444 };
-	
+
 	for (int x = 0; x < 16; x++)
 	{
 		for (int y = 0; y < 16; y++)
@@ -19,4 +19,7 @@ Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_B
 	}
 }
 
-Chunk::~Chunk() = default;
+Chunk::~Chunk()
+{
+	delete[] m_BlockData;
+}
