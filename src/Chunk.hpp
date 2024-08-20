@@ -30,7 +30,7 @@ public:
 	// Position of chunk relative to other chunk
 	glm::ivec3 m_ChunkPosition;
 	// Data for voxels, 16^3
-	std::shared_ptr<int8_t[]> m_BlockData; 
+	std::shared_ptr<int8_t[]> m_BlockData; // TODO: make this not a shared ptr, the chunk should be responsible for data RAII
 	// Bucket ID of supplied DrawPool
 	std::array<DrawPool::BucketID, 6> m_BucketIDs;
 };

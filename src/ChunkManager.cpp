@@ -2,8 +2,10 @@
 
 #include <algorithm>
 
+#include "imgui.h"
 
-ChunkManager::ChunkManager() : m_DrawPool(8192, 4096), m_Sorted {false}
+
+ChunkManager::ChunkManager() : m_DrawPool(8192 * 2, 4096), m_Sorted {false}
 {
 
 }
@@ -31,6 +33,7 @@ void ChunkManager::RemoveChunk(const glm::ivec3& t_ChunkPosition)
 	m_Sorted = false;
 }
 
+
 void ChunkManager::MeshChunks()
 {
 	while (!m_MeshingQueue.empty())
@@ -47,6 +50,15 @@ void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Proje
 
 void ChunkManager::ShowDebugInfo()
 {
+	if(ImGui::Button("Re-mesh All Chunks"))
+	{
+		LOG_PRINT("Re-meshing")
+		for (auto& chunk : m_Chunks)
+		{
+			m_MeshingQueue.push_back(chunk.m_ChunkPosition);
+		}
+	}
+
 	m_DrawPool.Debug();
 }
 
@@ -65,16 +77,18 @@ std::vector<Chunk>::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPos
 		m_Sorted = true;
 	}
 
-	return std::lower_bound(m_Chunks.begin(), m_Chunks.end(), t_ChunkPosition, [](const Chunk& first, const glm::ivec3& rh) {
+	auto ab = std::lower_bound(m_Chunks.begin(), m_Chunks.end(), t_ChunkPosition, [](const Chunk& first, const glm::ivec3& rh) {
 		auto& lh = first.m_ChunkPosition;
 		return lh.x != rh.x ?
 			lh.x < rh.x
 			: lh.y != rh.y ?
 			lh.y < rh.y
 			: lh.z < rh.z; });
+	
+	if (ab != m_Chunks.end() && ab->m_ChunkPosition == t_ChunkPosition)
+		return ab;
 
-	auto chunkComparator = [t_ChunkPosition](const Chunk& t_Chunk) { return t_ChunkPosition == t_Chunk.m_ChunkPosition; };
-	return std::ranges::find_if(m_Chunks.begin(), m_Chunks.end(), chunkComparator);
+	return m_Chunks.end();
 }
 
 void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
@@ -85,7 +99,8 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		return;
 
 	auto& chunk = *itr;
-	auto& blockData = chunk.m_BlockData;
+	auto blockData = chunk.m_BlockData.get();
+	auto& buckets = chunk.m_BucketIDs;
 
 	std::array<std::shared_ptr<int8_t[]>, 6> neighbors;
 
@@ -112,15 +127,6 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	otherChunk = GetChunk(t_ToMesh + glm::ivec3(-1, 0, 0));
 	if (otherChunk != m_Chunks.end())
 		neighbors[Utilities::WEST] = otherChunk->m_BlockData;
-	
-
-	for (auto id : chunk.m_BucketIDs)
-	{
-		if (id != nullptr)
-		{
-			m_DrawPool.FreeBucket(id);
-		}
-	}
 
 	std::array<std::vector<Vertex>, 6> vertexData;
 
@@ -656,12 +662,15 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		}
 	}
 
-	auto& buckets = chunk.m_BucketIDs;
-
 	for (int i = 0; i < 6; i++)
 	{
 		Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
-		buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
+		if (vertexData[direction].empty())
+			continue;
+
+		if (buckets[direction] == nullptr)
+			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
+
 		auto extraData = glm::ivec4(t_ToMesh, 0);
 		m_DrawPool.FillBucket(buckets[direction], vertexData[direction], direction, extraData);
 	}

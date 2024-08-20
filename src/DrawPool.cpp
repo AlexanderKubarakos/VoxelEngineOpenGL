@@ -77,9 +77,9 @@ void DrawPool::FreeBucket(BucketID t_Id)
 
 	// put the draw call we wish to remove to the back
 	std::swap(m_IndirectCallList[*t_Id], m_IndirectCallList.back());
-	std::swap(m_ExtraChunkDataList[*t_Id], m_ExtraChunkDataList.back());
+	std::swap(m_ExtraChunkDataList[*t_Id], m_ExtraChunkDataList[m_IndirectCallList.size()-1]);
 	m_IndirectCallList.pop_back();
-	m_ExtraChunkDataList.pop_back();
+	//m_ExtraChunkDataList.pop_back();
 	*m_IndirectCallList[*t_Id].m_BucketID = *t_Id;
 	delete t_Id; // Free the memory for the old DAIC pointer
 }
