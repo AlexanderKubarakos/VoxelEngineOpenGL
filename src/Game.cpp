@@ -34,7 +34,7 @@ void Game::Run()
 	ChunkManager chunkManger;
 
 	int verticalScale = 6;
-	int horizontalScale = 32;
+	int horizontalScale = 2;
 
 	for (int x = -horizontalScale; x < horizontalScale; x++)
 	{

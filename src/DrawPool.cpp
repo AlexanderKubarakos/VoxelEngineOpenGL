@@ -202,6 +202,8 @@ void DrawPool::Debug()
 	{
 		ImGui::Text("Bucket Quantity: %i", m_BucketQuantity);
 		ImGui::Text("Bucket Size (Vertices): %i", m_BucketSize);
+		ImGui::Text("DrawPool Size (KB): %i", m_BucketQuantity * m_BucketSize * sizeof(Vertex) / 1024);
+		ImGui::Text("DrawPool Used Size (KB): %i", (m_BucketQuantity - m_EmptyBuckets.size()) * m_BucketSize * sizeof(Vertex) / 1024);
 		ImGui::Text("Indirect Draw Call count: (%i/%i)", m_DrawCallLength, m_IndirectCallList.size());
 		ImGui::Text("Occlusion Override");
 		ImGui::Checkbox("Up", &m_SideOcclusionOverride[Utilities::DIRECTION::UP]);

@@ -4,8 +4,10 @@
 
 #include "imgui.h"
 
+static size_t maxLength = 0;
+static size_t triCount = 0;
 
-ChunkManager::ChunkManager() : m_DrawPool(8192 * 4, 4096), m_Sorted {false}
+ChunkManager::ChunkManager() : m_DrawPool(8192 * 4, 512), m_Sorted {false}
 {
 
 }
@@ -666,6 +668,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
 		if (vertexData[direction].empty())
 			continue;
+
+		maxLength = std::max(vertexData[direction].size(), maxLength);
+		triCount += vertexData[direction].size() / 2;
 
 		if (buckets[direction] == nullptr)
 			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
