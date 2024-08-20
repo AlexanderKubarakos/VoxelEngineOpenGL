@@ -21,7 +21,7 @@ public:
 		float dt = static_cast<float>(Utilities::GetDeltaTime());
 		float sprint = 1.0f;
 		if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT))
-			sprint += 2.0f;
+			sprint += 4.0f;
 
 		if (Input::IsKeyDown(GLFW_KEY_W))
 		{

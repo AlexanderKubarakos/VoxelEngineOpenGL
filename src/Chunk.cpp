@@ -1,18 +1,20 @@
 #include "Chunk.hpp"
-
-#include "FastNoiseLite.h"
+#define FASTNOISE_STATIC_LIB
+#include <FastNoise/FastNoise.h>
 
 Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ new int8_t[4096]() }, m_BucketIDs{nullptr}
 {
-	FastNoiseLite f{ 4444 };
+	static FastNoise::SmartNode<> fnGenerator = FastNoise::NewFromEncodedNodeTree("EQACAAAAAAAgQBAAAAAAQBkAEwDD9Sg/DQAEAAAAAAAgQAkAAGZmJj8AAAAAPwEEAAAAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM3MTD4AMzMzPwAAAAA/");
+	std::vector<float> noiseOutput(16 * 16 * 16);
+	fnGenerator->GenUniformGrid3D(noiseOutput.data(), t_ChunkPosition.x * 16, t_ChunkPosition.y * 16, t_ChunkPosition.z * 16, 16, 16, 16, 0.002f, 1337);
 
-	for (int x = 0; x < 16; x++)
+	for (int z = 0; z < 16; z++)
 	{
 		for (int y = 0; y < 16; y++)
 		{
-			for (int z = 0; z < 16; z++)
+			for (int x = 0; x < 16; x++)
 			{
-				if (f.GetNoise(static_cast<float>(x + t_ChunkPosition.x * 16), static_cast<float>(y + t_ChunkPosition.y * 16), static_cast<float>(z + t_ChunkPosition.z * 16)) > -0.25)
+				if (noiseOutput[x + 16 * y + z * 16 * 16] < 0)
 					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
 			}
 		}

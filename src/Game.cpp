@@ -33,11 +33,14 @@ void Game::Run()
 
 	ChunkManager chunkManger;
 
-	for (int x = -8; x < 8; x++)
+	int verticalScale = 6;
+	int horizontalScale = 32;
+
+	for (int x = -horizontalScale; x < horizontalScale; x++)
 	{
-		for (int y = -8; y < 8; y++)
+		for (int y = -verticalScale; y < verticalScale; y++)
 		{
-			for (int z = -8; z < 8; z++)
+			for (int z = -horizontalScale; z < horizontalScale; z++)
 			{
 				chunkManger.AddChunk(glm::vec3(x, y, z));
 			}

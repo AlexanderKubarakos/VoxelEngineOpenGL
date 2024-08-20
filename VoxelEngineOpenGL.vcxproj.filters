@@ -84,6 +84,8 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\glfw3.lib" />
+    <Library Include="libs\FastNoise.lib" />
+    <Library Include="libs\FastNoiseD.lib" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\KHR\khrplatform.h">
@@ -1026,6 +1028,42 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\FastNoiseLite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastSIMD\FastSIMD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastSIMD\FastSIMD_Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastSIMD\FastSIMD_Export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastSIMD\FunctionList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastSIMD\InlInclude.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastSIMD\SIMDTypeList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastNoise\FastNoise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastNoise\FastNoise_C.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastNoise\FastNoise_Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastNoise\FastNoise_Export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastNoise\Metadata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\FastNoise\SmartNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
