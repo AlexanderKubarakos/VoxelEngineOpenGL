@@ -5,9 +5,9 @@ struct Vertex
 	int position;
 
 	Vertex(int x, int y, int z) {
-		assert(x < 32 && x > -1 && y < 32 && y > -1 && z < 32 && z > -1);
-		x |= y << 5;
-		x |= z << 10;
+		assert(x <= 32 && x >= 0 && y <= 32 && y >= 0 && z <= 32 && z >= 0);
+		x |= y << 6;
+		x |= z << 12;
 		position = x;
 	}
 };

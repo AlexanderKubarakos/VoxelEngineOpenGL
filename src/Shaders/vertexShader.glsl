@@ -25,10 +25,10 @@ vec3 normals[6] = {
 
 void main()
 {
-    int x = aPos & 31;
-    int y = (aPos >> 5) & 31;
-    int z = (aPos >> 10) & 31;
-    vec3 augmentedPos = vec3(x * WorldScaler, y * WorldScaler, z * WorldScaler) + d_Data.d[gl_DrawID].xyz * 16 * WorldScaler;
+    int x = aPos & 63;
+    int y = (aPos >> 6) & 63;
+    int z = (aPos >> 12) & 63;
+    vec3 augmentedPos = vec3(x * WorldScaler, y * WorldScaler, z * WorldScaler) + d_Data.d[gl_DrawID].xyz * 32 * WorldScaler;
     gl_Position = MVP * vec4(augmentedPos, 1.0);
     vec4 viewSpace = MV * vec4(augmentedPos, 1.0);
 

@@ -9,8 +9,8 @@ float LinAlg::signedDistance(const Plane& t_Plane, const glm::vec3& t_Point)
 
 bool LinAlg::isChunkInFrustum(const Frustum& t_Frustum, const glm::vec3& t_Pos)
 {
-	float radius = 32.0f;
-	glm::vec3 centerSphere = t_Pos * 16.0f + 8.0f;
+	float radius = 96.0f;
+	glm::vec3 centerSphere = t_Pos * 32.0f + 8.0f;
 
 	// chuck if every point (j) is outside the same plane (i)
 	for (int i = 0; i < 6; i++)

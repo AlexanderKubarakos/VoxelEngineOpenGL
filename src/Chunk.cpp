@@ -2,23 +2,25 @@
 #define FASTNOISE_STATIC_LIB
 #include <FastNoise/FastNoise.h>
 
-Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ new int8_t[4096]() }, m_BucketIDs{nullptr}
+Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_BlockData{ new int8_t[32 * 32 * 32]() }, m_BucketIDs{nullptr}
 {
-	static FastNoise::SmartNode<> fnGenerator = FastNoise::NewFromEncodedNodeTree("EQACAAAAAAAgQBAAAAAAQBkAEwDD9Sg/DQAEAAAAAAAgQAkAAGZmJj8AAAAAPwEEAAAAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM3MTD4AMzMzPwAAAAA/");
-	std::vector<float> noiseOutput(16 * 16 * 16);
-	fnGenerator->GenUniformGrid3D(noiseOutput.data(), t_ChunkPosition.x * 16, t_ChunkPosition.y * 16, t_ChunkPosition.z * 16, 16, 16, 16, 0.002f, 1337);
+	static FastNoise::SmartNode<> fnGenerator = FastNoise::NewFromEncodedNodeTree("EwCamZk+GgABEQACAAAAAADgQBAAAACIQR8AFgABAAAACwADAAAAAgAAAAMAAAAEAAAAAAAAAD8BFAD//wAAAAAAAD8AAAAAPwAAAAA/AAAAAD8BFwAAAIC/AACAPz0KF0BSuB5AEwAAAKBABgAAj8J1PACamZk+AAAAAAAA4XoUPw==");
+	std::vector<float> noiseOutput(32 * 32 * 32);
+	fnGenerator->GenUniformGrid3D(noiseOutput.data(), t_ChunkPosition.x * 32, t_ChunkPosition.y * 32, t_ChunkPosition.z * 32, 32, 32, 32, 0.002f, 1337);
 
-	for (int z = 0; z < 16; z++)
+	for (int z = 0; z < 32; z++)
 	{
-		for (int y = 0; y < 16; y++)
+		for (int y = 0; y < 32; y++)
 		{
-			for (int x = 0; x < 16; x++)
+			for (int x = 0; x < 32; x++)
 			{
-				if (noiseOutput[x + 16 * y + z * 16 * 16] < 0)
-					m_BlockData[x + 16 * y + z * 16 * 16] = 1;
+				if (noiseOutput[x + 32 * y + z * 32 * 32] < 0)
+					m_BlockData[x + 32 * y + z * 32 * 32] = 1;
 			}
 		}
 	}
+
+	LOG_PRINT("Finished chunk loading")
 }
 
 Chunk::~Chunk()
