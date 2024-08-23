@@ -6,12 +6,13 @@
 
 #include "imgui.h"
 
-DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl")
+DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), backFaceCulling{true}
 {
 	Reserve(t_BucketQuantity, t_BucketSize);
 	GenerateIndices();
 
 	m_MVPUniformLocation = m_Shader.getUniformLocation("MVP");
+	m_MVUniformLocation = m_Shader.getUniformLocation("MV");
 	std::fill(m_SideOcclusionOverride.begin(), m_SideOcclusionOverride.end(), true);
 }
 
@@ -66,6 +67,7 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Util
 	t_ExtraData.w = t_MeshDirection;
 	m_ExtraChunkDataList[*t_Id] = t_ExtraData;
 	m_IndirectCallList[*t_Id].m_Direction = t_MeshDirection;
+	m_IndirectCallList[*t_Id].m_IndicesCount = t_Data.size() / 4 * 6;
 }
 
 void DrawPool::FreeBucket(BucketID t_Id)
@@ -124,6 +126,12 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 
 	// Map (allocate memory on client) memory that will be coherent (kept up to date) with server
 	m_Start = static_cast<Vertex*>(m_VertexBuffer.MapBufferRange(0, mapSize, accessFlags));
+	assert((mapSize / 1024.0f / 1024.0f / 1024.0f) < 2.0f);
+
+	if (m_Start == nullptr)
+	{
+		ERROR_PRINT("FATAL ERROR: Failed to allocate memory on GPU, trying to allocate " << mapSize/1024/1024 << "MB\n")
+	}
 
 	// Fill the queue of empty buckets with every bucket, each is a pointer to the start of the bucket, with t_BucketSize of memory
 	for (size_t i = 0; i < m_BucketQuantity; i++)
@@ -138,7 +146,7 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	m_ExtraChunkDataBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP)
+void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 {
 	auto frustum = LinAlg::frustumExtraction(t_MVP);
 	// Sort draw calls
@@ -146,8 +154,27 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP)
 		{
 			if (!m_SideOcclusionOverride[daic.m_Direction])
 				return false;
-			
-			return LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID]);
+
+			// Cameras position, looking vector
+			glm::ivec3 chunkPos = m_ExtraChunkDataList[*daic.m_BucketID] * 32 + 16;
+
+			glm::vec3 normals[6] = {
+				glm::vec3(0,1,0),
+				glm::vec3(0,-1,0),
+				glm::vec3(0,0,1),
+				glm::vec3(0,0,-1),
+				glm::vec3(1,0,0),
+				glm::vec3(-1,0,0)
+			};
+
+			glm::vec3 normal = normals[m_ExtraChunkDataList[*daic.m_BucketID].w];
+			if (backFaceCulling && glm::dot(normal, (glm::vec3(chunkPos) - 16.0f * normal) - camera.CameraPos()) >= 0)
+				return false;
+
+			if (!LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID]))
+				return false;
+
+			return true;
 		};
 
 	int M = 0;
@@ -185,13 +212,14 @@ void DrawPool::GenerateIndices()
 	m_IndicesBuffer.SetBufferData<GLuint>(indices);
 }
 
-void DrawPool::Render(const glm::mat4& t_MVP, const glm::mat4& t_MV)
+void DrawPool::Render(const glm::mat4& t_MVP, const glm::mat4& t_MV, const Camera& camera)
 {
-	UpdateDrawCalls(t_MVP);
+	UpdateDrawCalls(t_MVP, camera);
+
 
 	m_Shader.Use();
 	m_Shader.SetMatrix4f(m_MVPUniformLocation, t_MVP);
-	m_Shader.SetMatrix4f(m_Shader.getUniformLocation("MV"), t_MV);
+	m_Shader.SetMatrix4f(m_MVUniformLocation, t_MV);
 	m_VAO.Bind();
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(m_DrawCallLength), sizeof(DAIC));
 }
@@ -205,7 +233,8 @@ void DrawPool::Debug()
 		ImGui::Text("DrawPool Size (KB): %i", m_BucketQuantity * m_BucketSize * sizeof(Vertex) / 1024);
 		ImGui::Text("DrawPool Used Size (KB): %i", (m_BucketQuantity - m_EmptyBuckets.size()) * m_BucketSize * sizeof(Vertex) / 1024);
 		ImGui::Text("Indirect Draw Call count: (%i/%i)", m_DrawCallLength, m_IndirectCallList.size());
-		ImGui::Text("Occlusion Override");
+		ImGui::Text("Occlusion Settings");
+		ImGui::Checkbox("Back Face Culling", &backFaceCulling);
 		ImGui::Checkbox("Up", &m_SideOcclusionOverride[Utilities::DIRECTION::UP]);
 		ImGui::Checkbox("Down", &m_SideOcclusionOverride[Utilities::DIRECTION::DOWN]);
 		ImGui::Checkbox("North", &m_SideOcclusionOverride[Utilities::DIRECTION::NORTH]);

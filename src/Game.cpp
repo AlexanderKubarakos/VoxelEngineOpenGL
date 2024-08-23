@@ -32,9 +32,8 @@ void Game::Run()
 	ImGui_ImplOpenGL3_Init();
 
 	ChunkManager chunkManger;
-
-	int verticalScale = 7;
-	int horizontalScale = 7;
+	int verticalScale = 4;
+	int horizontalScale = 10;
 
 	for (int x = -horizontalScale; x <= horizontalScale; x++)
 	{
@@ -46,7 +45,7 @@ void Game::Run()
 			}
 		}
 	}
-	//chunkManger.AddChunk(glm::vec3(0, 0, 0));
+
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
 
@@ -82,7 +81,7 @@ void Game::Run()
 		}
 
 		m_Camera.ProcessInput();
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / m_Window.getExtent().y, 0.1f,10000.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / static_cast<float>(m_Window.getExtent().y), 0.1f,10000.0f);
 
 		chunkManger.MeshChunks();
 		chunkManger.RenderChunks(m_Camera, projection);

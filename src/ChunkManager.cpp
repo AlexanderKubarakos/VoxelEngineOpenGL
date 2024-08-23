@@ -4,7 +4,7 @@
 
 #include "imgui.h"
 
-ChunkManager::ChunkManager() : m_DrawPool(8192, 4096 * 8), m_Sorted {false}
+ChunkManager::ChunkManager() : m_DrawPool(8192 * 4 - 1, 4096 * 4), m_Sorted {false}
 {
 
 }
@@ -44,7 +44,7 @@ void ChunkManager::MeshChunks()
 
 void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Projection)
 {
-	m_DrawPool.Render(t_Projection * t_Camera.GetViewMatrix(), t_Camera.GetViewMatrix());
+	m_DrawPool.Render(t_Projection * t_Camera.GetViewMatrix(), t_Camera.GetViewMatrix(), t_Camera);
 }
 
 void ChunkManager::ShowDebugInfo()
@@ -659,7 +659,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 			}
 		}
 	}
-
+	int count = 0;
 	bool notBlankChunk = false;
 	for (int i = 0; i < 6; i++)
 	{
@@ -670,6 +670,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		if (buckets[direction] == nullptr)
 			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
 
+		count += vertexData[direction].size();
 		notBlankChunk = true;
 		auto extraData = glm::ivec4(t_ToMesh, 0);
 		m_DrawPool.FillBucket(buckets[direction], vertexData[direction], direction, extraData);

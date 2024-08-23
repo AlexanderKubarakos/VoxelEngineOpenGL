@@ -8,6 +8,7 @@
 #include "OpenGL/VAO.hpp"
 #include "Utilities.hpp"
 
+#include "OpenGL/camera.hpp"
 #include "OpenGL/Shader.hpp"
 
 class DrawPool
@@ -30,7 +31,7 @@ public:
 	void FreeBucket(BucketID t_Id);
 	void FreeBucket(std::array<DrawPool::BucketID, 6>& t_Buckets);
 	// Render all meshes in pool
-	void Render(const glm::mat4& t_MVP, const glm::mat4& t_MV);
+	void Render(const glm::mat4& t_MVP, const glm::mat4& t_MV, const Camera& camera);
 	// Show Debug Data
 	void Debug();
 private:
@@ -78,14 +79,17 @@ private:
 
 	Shader m_Shader;
 	GLint m_MVPUniformLocation;
+	GLint m_MVUniformLocation;
 
 	std::vector<DAIC> m_IndirectCallList;
 	std::vector<glm::ivec4> m_ExtraChunkDataList;
 
 	void Reserve(size_t t_BucketQuantity, size_t t_BucketSize); // Allocates memory in back end for pool
-	void UpdateDrawCalls(const glm::mat4& t_MVP); // Resorts draw call (DAIC) and re-uploads all data to GPU so that draw calls are correct
+	void UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera); // Resorts draw call (DAIC) and re-uploads all data to GPU so that draw calls are correct
 	void GenerateIndices(); // Update index buffer, every 4 vertices we need to generate 6 indices
 
 	// Debug Data
 	std::array<bool, 6> m_SideOcclusionOverride;
+	bool backFaceCulling;
+	
 };
