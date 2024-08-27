@@ -32,8 +32,9 @@ void Game::Run()
 	ImGui_ImplOpenGL3_Init();
 
 	ChunkManager chunkManger;
-	int verticalScale = 4;
-	int horizontalScale = 10;
+	constexpr int verticalScale = 4;
+	constexpr int horizontalScale = 10;
+	constexpr int totalChunkCount = (verticalScale * 2 + 1) * (horizontalScale * 2 + 1) * (horizontalScale * 2 + 1);
 
 	for (int x = -horizontalScale; x <= horizontalScale; x++)
 	{

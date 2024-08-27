@@ -4,7 +4,7 @@
 
 #include "imgui.h"
 
-ChunkManager::ChunkManager() : m_DrawPool(8192 * 4 - 1, 4096 * 4), m_Sorted {false}
+ChunkManager::ChunkManager() : m_DrawPool(6000, 4096 * 4), m_Sorted {false}
 {
 
 }
@@ -57,7 +57,8 @@ void ChunkManager::ShowDebugInfo()
 			m_MeshingQueue.push_back(chunk.m_ChunkPosition);
 		}
 	}
-
+	ImGui::Text("Chunk Count: %i", m_Chunks.size());
+	ImGui::Text("Chunk Data Size: %iMB", m_Chunks.size() * 32 * 32 * 32 * sizeof(int8_t)/1024/1024);
 	m_DrawPool.Debug();
 }
 
