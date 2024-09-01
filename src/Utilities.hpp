@@ -7,7 +7,7 @@
 #include <chrono>
 #include <iostream>
 
-#define ENABLE_TIMER 1
+#define ENABLE_TIMER 0
 
 #if ENABLE_TIMER
 #define TIMER_START(ID) auto timerStart##ID = std::chrono::high_resolution_clock::now();
@@ -19,13 +19,13 @@
 #define TIMER_END(ID, Message) 
 #endif
 
-#if _DEBUG 
+//#if _DEBUG 
 #define LOG_PRINT(Message) std::cerr << Message << '\n';
 #define ERROR_PRINT(Message) std::cerr << Message << '\n';
-#else
-#define LOG_PRINT(Message) 
-#define ERROR_PRINT(Message)
-#endif
+//#else
+//#define LOG_PRINT(Message) 
+//#define ERROR_PRINT(Message)
+//#endif
 
 namespace Utilities
 {

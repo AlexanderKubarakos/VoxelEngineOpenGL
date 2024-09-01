@@ -6,10 +6,9 @@
 
 #include "imgui.h"
 
-DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), backFaceCulling{true}
+DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), backFaceCulling{false}
 {
 	Reserve(t_BucketQuantity, t_BucketSize);
-	GenerateIndices();
 
 	m_MVPUniformLocation = m_Shader.getUniformLocation("MVP");
 	m_MVUniformLocation = m_Shader.getUniformLocation("MV");
@@ -24,12 +23,12 @@ DrawPool::~DrawPool()
 	}
 }
 
-// t_Size is vertex count
+// t_Size is vertex count, face count now
 DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 {
 	if (t_Size > m_BucketSize || m_EmptyBuckets.empty())
 	{
-		ERROR_PRINT("Error: While trying to allocate bucket, out of buckets, or requesting no space in bucket. Buckets Left: " << m_EmptyBuckets.size())
+		ERROR_PRINT("Error: While trying to allocate bucket, out of buckets, or requesting no (0) space in bucket. Buckets Left: " << m_EmptyBuckets.size())
 		return nullptr;
 	}
 
@@ -40,13 +39,14 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 	}
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
-	m_IndirectCallList.emplace_back(t_Size/4 * 6, 1, 0, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
+	m_IndirectCallList.emplace_back(t_Size * 6, 1, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
+	m_IndirectCallList.back().m_OpenGLFirstVertex = m_BucketSize * 6 * (m_IndirectCallList.size() - 1);
 	m_EmptyBuckets.pop_back();
 
 	return m_IndirectCallList.back().m_BucketID;
 }
 
-void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::ivec4& t_ExtraData)
+void DrawPool::FillBucket(BucketID t_Id, const std::vector<FaceVertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::ivec4& t_ExtraData)
 {
 	if (t_Data.size() > m_BucketSize)
 	{
@@ -61,13 +61,13 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<Vertex>& t_Data, Util
 	}
 		
 	// find start of the bucket for t_Id, m.BaseVertex is relative to m_Start
-	Vertex* start = m_Start + m_IndirectCallList[*t_Id].m_BaseVertex;
-	memcpy(start, t_Data.data(), t_Data.size() * sizeof(Vertex));
+	FaceVertex* start = m_Start + m_IndirectCallList[*t_Id].m_VertexPoolPosition;
+	memcpy(start, t_Data.data(), t_Data.size() * sizeof(FaceVertex));
 
 	t_ExtraData.w = t_MeshDirection;
 	m_ExtraChunkDataList[*t_Id] = t_ExtraData;
 	m_IndirectCallList[*t_Id].m_Direction = t_MeshDirection;
-	m_IndirectCallList[*t_Id].m_IndicesCount = t_Data.size() / 4 * 6;
+	m_IndirectCallList[*t_Id].m_VertexCount = t_Data.size() * 6;
 }
 
 void DrawPool::FreeBucket(BucketID t_Id)
@@ -75,7 +75,7 @@ void DrawPool::FreeBucket(BucketID t_Id)
 	if (t_Id == nullptr)
 		return;
 	// Push to the back of the queue where this bucket starts
-	m_EmptyBuckets.push_front(m_Start + m_IndirectCallList[*t_Id].m_BaseVertex);
+	m_EmptyBuckets.push_front(m_Start + m_IndirectCallList[*t_Id].m_VertexPoolPosition);
 
 	// put the draw call we wish to remove to the back
 	std::swap(m_IndirectCallList[*t_Id], m_IndirectCallList.back());
@@ -110,14 +110,8 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	// Might be clearer as a std::array
 	m_ExtraChunkDataList.resize(t_BucketQuantity);
 
-	// Setup VAO attributes
-	m_VAO.AddAttributeInt(0, 0, 1, GL_INT, 0); // Position Attribute
-
-	// Bind the buffer to the vao
-	m_VAO.BindVertexBuffer(m_VertexBuffer, 0, 0, sizeof(Vertex));
-
 	// Byte Size of Buffer, how many bytes is the pool
-	size_t mapSize = t_BucketQuantity * t_BucketSize * sizeof(Vertex);
+	size_t mapSize = t_BucketQuantity * t_BucketSize * sizeof(FaceVertex);
 	// GL access flags for GL buffer, client can write to buffer, client buffer exists till destroyed, client and server are kept
 	GLbitfield accessFlags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
@@ -125,7 +119,7 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	m_VertexBuffer.SetupBufferStorage(mapSize, nullptr, accessFlags);
 
 	// Map (allocate memory on client) memory that will be coherent (kept up to date) with server
-	m_Start = static_cast<Vertex*>(m_VertexBuffer.MapBufferRange(0, mapSize, accessFlags));
+	m_Start = static_cast<FaceVertex*>(m_VertexBuffer.MapBufferRange(0, mapSize, accessFlags));
 	assert((mapSize / 1024.0f / 1024.0f / 1024.0f) < 2.0f);
 
 	if (m_Start == nullptr)
@@ -141,24 +135,30 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 	}
 
 	m_VAO.Bind();
-	m_IndicesBuffer.BindBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	m_IndirectCallBuffer.BindBuffer(GL_DRAW_INDIRECT_BUFFER);
 	m_ExtraChunkDataBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 0);
+	m_VertexBuffer.BindBufferBase(GL_SHADER_STORAGE_BUFFER, 1);
 }
 
 void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 {
 	auto frustum = LinAlg::frustumExtraction(t_MVP);
 	// Sort draw calls
-	auto func = [&](DAIC& daic)->bool
+
+	auto shouldRender = [&](DAIC& daic)->bool
 		{
 			if (!m_SideOcclusionOverride[daic.m_Direction])
 				return false;
 
 			// Cameras position, looking vector
-			glm::ivec3 chunkPos = m_ExtraChunkDataList[*daic.m_BucketID] * 32 + 16;
+			glm::ivec4 chunkPos = m_ExtraChunkDataList[*daic.m_BucketID];
 
-			glm::vec3 normals[6] = {
+			if (!LinAlg::isChunkInFrustum(frustum, chunkPos))
+				return false;
+
+			glm::vec3 chunkPosFloat = chunkPos * 32 + 16;
+
+			static glm::vec3 normals[6] = {
 				glm::vec3(0,1,0),
 				glm::vec3(0,-1,0),
 				glm::vec3(0,0,1),
@@ -167,23 +167,22 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 				glm::vec3(-1,0,0)
 			};
 
-			glm::vec3 normal = normals[m_ExtraChunkDataList[*daic.m_BucketID].w];
-			if (backFaceCulling && glm::dot(normal, (glm::vec3(chunkPos) - 16.0f * normal) - camera.CameraPos()) >= 0)
+			glm::vec3 normal = normals[chunkPos.w];
+			if (backFaceCulling && glm::dot(normal, (chunkPosFloat - 16.0f * normal) - camera.CameraPos()) > 0)
 				return false;
 
-			if (!LinAlg::isChunkInFrustum(frustum, m_ExtraChunkDataList[*daic.m_BucketID]))
-				return false;
+
 
 			return true;
 		};
 
 	int M = 0;
-	int J = static_cast<int>(m_IndirectCallList.size() - 1); //Backside Approach
+	int J = static_cast<int>(m_IndirectCallList.size() - 1);
 
 	//Execute Sorting Pass
 	while (M <= J) {
-		while (func(m_IndirectCallList[M]) && M < J) M++;
-		while (!func(m_IndirectCallList[J]) && M < J) J--;
+		while (shouldRender(m_IndirectCallList[M]) && M < J) M++;
+		while (!shouldRender(m_IndirectCallList[J]) && M < J) J--;
 		*m_IndirectCallList[M].m_BucketID = J;
 		*m_IndirectCallList[J].m_BucketID = M;
 		std::swap(m_ExtraChunkDataList[M], m_ExtraChunkDataList[J]);
@@ -196,32 +195,14 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 	m_ExtraChunkDataBuffer.SetBufferData<glm::ivec4>(m_ExtraChunkDataList, GL_DYNAMIC_DRAW);
 }
 
-void DrawPool::GenerateIndices()
-{
-	std::vector<GLuint> indices;
-	// Generates all the indices that are needed, every 4 vertices need 6 indices
-	for (int j = 0; j < m_BucketSize/4; j++) {
-		indices.push_back(j * 4 + 0);  //Triangle 1
-		indices.push_back(j * 4 + 1);
-		indices.push_back(j * 4 + 3);
-		indices.push_back(j * 4 + 0);  //Triangle 2
-		indices.push_back(j * 4 + 2);
-		indices.push_back(j * 4 + 3);
-	}
-
-	m_IndicesBuffer.SetBufferData<GLuint>(indices);
-}
-
 void DrawPool::Render(const glm::mat4& t_MVP, const glm::mat4& t_MV, const Camera& camera)
 {
 	UpdateDrawCalls(t_MVP, camera);
-
-
 	m_Shader.Use();
 	m_Shader.SetMatrix4f(m_MVPUniformLocation, t_MVP);
 	m_Shader.SetMatrix4f(m_MVUniformLocation, t_MV);
 	m_VAO.Bind();
-	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, static_cast<GLsizei>(m_DrawCallLength), sizeof(DAIC));
+	glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, static_cast<GLsizei>(m_DrawCallLength), sizeof(DAIC));
 }
 
 void DrawPool::Debug()
@@ -229,9 +210,9 @@ void DrawPool::Debug()
 	if (ImGui::CollapsingHeader("Draw Pool", ImGuiTreeNodeFlags_None))
 	{
 		ImGui::Text("Bucket Quantity: %i", m_BucketQuantity);
-		ImGui::Text("Bucket Size (Vertices): %i", m_BucketSize);
-		ImGui::Text("DrawPool Size (KB): %i", m_BucketQuantity * m_BucketSize * sizeof(Vertex) / 1024);
-		ImGui::Text("DrawPool Used Size (KB): %i", (m_BucketQuantity - m_EmptyBuckets.size()) * m_BucketSize * sizeof(Vertex) / 1024);
+		ImGui::Text("Bucket Size (Faces): %i", m_BucketSize);
+		ImGui::Text("DrawPool Size (KB): %i", m_BucketQuantity * m_BucketSize * sizeof(FaceVertex) / 1024);
+		ImGui::Text("DrawPool Used Size (KB): %i", (m_BucketQuantity - m_EmptyBuckets.size()) * m_BucketSize * sizeof(FaceVertex) / 1024);
 		ImGui::Text("Indirect Draw Call count: (%i/%i)", m_DrawCallLength, m_IndirectCallList.size());
 		ImGui::Text("Occlusion Settings");
 		ImGui::Checkbox("Back Face Culling", &backFaceCulling);

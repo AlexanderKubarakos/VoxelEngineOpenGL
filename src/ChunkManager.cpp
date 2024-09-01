@@ -4,7 +4,9 @@
 
 #include "imgui.h"
 
-ChunkManager::ChunkManager() : m_DrawPool(6000, 4096 * 4), m_Sorted {false}
+static int maxSize = 0;
+
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 64, 4096), m_Sorted {false}
 {
 
 }
@@ -40,6 +42,7 @@ void ChunkManager::MeshChunks()
 		MeshChunk(m_MeshingQueue.front());
 		m_MeshingQueue.pop_front();
 	}
+	
 }
 
 void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Projection)
@@ -56,6 +59,7 @@ void ChunkManager::ShowDebugInfo()
 		{
 			m_MeshingQueue.push_back(chunk.m_ChunkPosition);
 		}
+		LOG_PRINT("MaxSize: " << maxSize);
 	}
 	ImGui::Text("Chunk Count: %i", m_Chunks.size());
 	ImGui::Text("Chunk Data Size: %iMB", m_Chunks.size() * 32 * 32 * 32 * sizeof(int8_t)/1024/1024);
@@ -128,7 +132,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	if (otherChunk != m_Chunks.end())
 		neighbors[Utilities::WEST] = otherChunk->m_BlockData;
 
-	std::array<std::vector<Vertex>, 6> vertexData;
+	std::array<std::vector<FaceVertex>, 6> faceData;
 
 	// xy plane, facing -layerZ
 	for (int layerZ = 0; layerZ < 32; layerZ++)
@@ -218,16 +222,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						bitmap[subY] |= voxelMask;
 					}
 
-					//sideAddXY(layerX, layerY, lengthX, lengthY, layerZ);
-					Vertex bottomLeft{ layerX, layerY, layerZ };
-					Vertex topLeft{ layerX, layerY + lengthY, layerZ };
-					Vertex bottomRight{ layerX + lengthX, layerY, layerZ };
-					Vertex topRight{ layerX + lengthX, layerY + lengthY, layerZ };
+					FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY };
 
-					vertexData[Utilities::DIRECTION::NORTH].push_back(bottomLeft);
-					vertexData[Utilities::DIRECTION::NORTH].push_back(topLeft);
-					vertexData[Utilities::DIRECTION::NORTH].push_back(bottomRight);
-					vertexData[Utilities::DIRECTION::NORTH].push_back(topRight);
+					faceData[Utilities::DIRECTION::NORTH].push_back(face);
 				}
 			}
 		}
@@ -303,17 +300,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						bitmap[subY] |= voxelMask;
 					}
 
-					//sideAddXY(layerX, layerY, lengthX, lengthY, layerZ + 1);
-					int tempZ = layerZ + 1;
-					Vertex bottomLeft{ layerX, layerY, tempZ };
-					Vertex topLeft{ layerX, layerY + lengthY, tempZ };
-					Vertex bottomRight{ layerX + lengthX, layerY, tempZ };
-					Vertex topRight{ layerX + lengthX, layerY + lengthY, tempZ };
+					FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY };
 
-					vertexData[Utilities::DIRECTION::SOUTH].push_back(bottomLeft);
-					vertexData[Utilities::DIRECTION::SOUTH].push_back(topLeft);
-					vertexData[Utilities::DIRECTION::SOUTH].push_back(bottomRight);
-					vertexData[Utilities::DIRECTION::SOUTH].push_back(topRight);
+					faceData[Utilities::DIRECTION::SOUTH].push_back(face);
 				}
 			}
 		}
@@ -390,16 +379,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					}
 
 					//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY + 1);
-					int tempY = layerY + 1;
-					Vertex bottomLeft{ layerX, tempY, layerZ };
-					Vertex topLeft{ layerX, tempY, layerZ + lengthZ };
-					Vertex bottomRight{ layerX + lengthX, tempY, layerZ };
-					Vertex topRight{ layerX + lengthX, tempY, layerZ + lengthZ };
+					FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ };
 
-					vertexData[Utilities::DIRECTION::UP].push_back(bottomLeft);
-					vertexData[Utilities::DIRECTION::UP].push_back(topLeft);
-					vertexData[Utilities::DIRECTION::UP].push_back(bottomRight);
-					vertexData[Utilities::DIRECTION::UP].push_back(topRight);
+					faceData[Utilities::DIRECTION::UP].push_back(face);
 				}
 			}
 		}
@@ -475,16 +457,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						bitmap[subZ] |= voxelMask;
 					}
 
-					//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY);
-					Vertex bottomLeft{ layerX, layerY, layerZ };
-					Vertex topLeft{ layerX, layerY, layerZ + lengthZ };
-					Vertex bottomRight{ layerX + lengthX, layerY, layerZ };
-					Vertex topRight{ layerX + lengthX, layerY, layerZ + lengthZ };
+					FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ };
 
-					vertexData[Utilities::DIRECTION::DOWN].push_back(bottomLeft);
-					vertexData[Utilities::DIRECTION::DOWN].push_back(topLeft);
-					vertexData[Utilities::DIRECTION::DOWN].push_back(bottomRight);
-					vertexData[Utilities::DIRECTION::DOWN].push_back(topRight);
+					faceData[Utilities::DIRECTION::DOWN].push_back(face);
 				}
 			}
 		}
@@ -561,16 +536,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 					}
 
 					//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX + 1);
-					int tempX = layerX + 1;
-					Vertex bottomLeft{ tempX, layerY, layerZ };
-					Vertex topLeft{ tempX, layerY, layerZ + lengthZ };
-					Vertex bottomRight{ tempX, layerY + lengthY, layerZ };
-					Vertex topRight{ tempX, layerY + lengthY, layerZ + lengthZ };
+					FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ };
 
-					vertexData[Utilities::DIRECTION::EAST].push_back(bottomLeft);
-					vertexData[Utilities::DIRECTION::EAST].push_back(topLeft);
-					vertexData[Utilities::DIRECTION::EAST].push_back(bottomRight);
-					vertexData[Utilities::DIRECTION::EAST].push_back(topRight);
+					faceData[Utilities::DIRECTION::EAST].push_back(face);
 				}
 			}
 		}
@@ -646,16 +614,9 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 						bitmap[subZ] |= voxelMask;
 					}
 
-					//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX);
-					Vertex bottomLeft{ layerX, layerY, layerZ };
-					Vertex topLeft{ layerX, layerY, layerZ + lengthZ };
-					Vertex bottomRight{ layerX, layerY + lengthY, layerZ };
-					Vertex topRight{ layerX, layerY + lengthY, layerZ + lengthZ };
+					FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ };
 
-					vertexData[Utilities::DIRECTION::WEST].push_back(bottomLeft);
-					vertexData[Utilities::DIRECTION::WEST].push_back(topLeft);
-					vertexData[Utilities::DIRECTION::WEST].push_back(bottomRight);
-					vertexData[Utilities::DIRECTION::WEST].push_back(topRight);
+					faceData[Utilities::DIRECTION::WEST].push_back(face);
 				}
 			}
 		}
@@ -665,16 +626,17 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	for (int i = 0; i < 6; i++)
 	{
 		Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
-		if (vertexData[direction].empty())
+		if (faceData[direction].empty())
 			continue;
 
 		if (buckets[direction] == nullptr)
-			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(vertexData[direction].size()));
+			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(faceData[direction].size()));
 
-		count += vertexData[direction].size();
+		count += faceData[direction].size();
 		notBlankChunk = true;
 		auto extraData = glm::ivec4(t_ToMesh, 0);
-		m_DrawPool.FillBucket(buckets[direction], vertexData[direction], direction, extraData);
+		m_DrawPool.FillBucket(buckets[direction], faceData[direction], direction, extraData);
+		maxSize = std::max(maxSize, static_cast<int>(faceData[direction].size()));
 	}
 
 	// Only print time if not trivial chunk

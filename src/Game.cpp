@@ -32,8 +32,8 @@ void Game::Run()
 	ImGui_ImplOpenGL3_Init();
 
 	ChunkManager chunkManger;
-	constexpr int verticalScale = 4;
-	constexpr int horizontalScale = 10;
+	constexpr int verticalScale = 5;
+	constexpr int horizontalScale = 5;
 	constexpr int totalChunkCount = (verticalScale * 2 + 1) * (horizontalScale * 2 + 1) * (horizontalScale * 2 + 1);
 
 	for (int x = -horizontalScale; x <= horizontalScale; x++)
@@ -46,7 +46,7 @@ void Game::Run()
 			}
 		}
 	}
-
+	//chunkManger.AddChunk(glm::vec3(0,0,0));
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
 
@@ -101,6 +101,5 @@ void Game::Run()
 		{
 			Stop();
 		}
-
 	}
 }
