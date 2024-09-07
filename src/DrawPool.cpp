@@ -6,7 +6,7 @@
 
 #include "imgui.h"
 
-DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), backFaceCulling{false}
+DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), m_BackFaceCulling{false}, m_CullingMaster{true}
 {
 	Reserve(t_BucketQuantity, t_BucketSize);
 
@@ -142,11 +142,14 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 
 void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 {
+	if (!m_CullingMaster)
+		return;
 	auto frustum = LinAlg::frustumExtraction(t_MVP);
 	// Sort draw calls
 
 	auto shouldRender = [&](DAIC& daic)->bool
 		{
+			
 			if (!m_SideOcclusionOverride[daic.m_Direction])
 				return false;
 
@@ -168,10 +171,8 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 			};
 
 			glm::vec3 normal = normals[chunkPos.w];
-			if (backFaceCulling && glm::dot(normal, (chunkPosFloat - 16.0f * normal) - camera.CameraPos()) > 0)
+			if (m_BackFaceCulling && glm::dot(normal, (chunkPosFloat - 16.0f * normal) - camera.CameraPos()) > 0)
 				return false;
-
-
 
 			return true;
 		};
@@ -214,8 +215,9 @@ void DrawPool::Debug()
 		ImGui::Text("DrawPool Size (KB): %i", m_BucketQuantity * m_BucketSize * sizeof(FaceVertex) / 1024);
 		ImGui::Text("DrawPool Used Size (KB): %i", (m_BucketQuantity - m_EmptyBuckets.size()) * m_BucketSize * sizeof(FaceVertex) / 1024);
 		ImGui::Text("Indirect Draw Call count: (%i/%i)", m_DrawCallLength, m_IndirectCallList.size());
-		ImGui::Text("Occlusion Settings");
-		ImGui::Checkbox("Back Face Culling", &backFaceCulling);
+		ImGui::Text("Culling Settings");
+		ImGui::Checkbox("Any Culling", &m_CullingMaster);
+		ImGui::Checkbox("Back Face Culling", &m_BackFaceCulling);
 		ImGui::Checkbox("Up", &m_SideOcclusionOverride[Utilities::DIRECTION::UP]);
 		ImGui::Checkbox("Down", &m_SideOcclusionOverride[Utilities::DIRECTION::DOWN]);
 		ImGui::Checkbox("North", &m_SideOcclusionOverride[Utilities::DIRECTION::NORTH]);

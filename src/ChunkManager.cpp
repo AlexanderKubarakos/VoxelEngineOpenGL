@@ -5,8 +5,9 @@
 #include "imgui.h"
 
 static int maxSize = 0;
+static int vertCount = 0;
 
-ChunkManager::ChunkManager() : m_DrawPool(1024 * 64, 4096), m_Sorted {false}
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_Sorted {false}
 {
 
 }
@@ -63,6 +64,7 @@ void ChunkManager::ShowDebugInfo()
 	}
 	ImGui::Text("Chunk Count: %i", m_Chunks.size());
 	ImGui::Text("Chunk Data Size: %iMB", m_Chunks.size() * 32 * 32 * 32 * sizeof(int8_t)/1024/1024);
+	ImGui::Text("Vert count: %i", vertCount);
 	m_DrawPool.Debug();
 }
 
@@ -621,7 +623,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 			}
 		}
 	}
-	int count = 0;
+
 	bool notBlankChunk = false;
 	for (int i = 0; i < 6; i++)
 	{
@@ -632,7 +634,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		if (buckets[direction] == nullptr)
 			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(faceData[direction].size()));
 
-		count += faceData[direction].size();
+		vertCount += faceData[direction].size();
 		notBlankChunk = true;
 		auto extraData = glm::ivec4(t_ToMesh, 0);
 		m_DrawPool.FillBucket(buckets[direction], faceData[direction], direction, extraData);

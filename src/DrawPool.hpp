@@ -91,7 +91,7 @@ private:
 	void UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera); // Resorts draw call (DAIC) and re-uploads all data to GPU so that draw calls are correct
 
 	// Debug Data
+	bool m_CullingMaster;
 	std::array<bool, 6> m_SideOcclusionOverride;
-	bool backFaceCulling;
-	
+	bool m_BackFaceCulling;
 };
