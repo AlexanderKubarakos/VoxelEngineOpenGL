@@ -1,13 +1,14 @@
 #include "ChunkManager.hpp"
 
 #include <algorithm>
+#include <queue>
 
 #include "imgui.h"
+#include <set>
 
 static int maxSize = 0;
-static int vertCount = 0;
 
-ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_Sorted {false}
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_Sorted {false}, m_ViewDistance {8}
 {
 
 }
@@ -17,8 +18,6 @@ ChunkManager::~ChunkManager() = default;
 void ChunkManager::AddChunk(const glm::ivec3& t_ChunkPosition)
 {
 	m_Chunks.emplace_back(t_ChunkPosition);
-	m_MeshingQueue.emplace_back(t_ChunkPosition);
-	m_Sorted = false;
 }
 
 void ChunkManager::RemoveChunk(const glm::ivec3& t_ChunkPosition)
@@ -35,6 +34,89 @@ void ChunkManager::RemoveChunk(const glm::ivec3& t_ChunkPosition)
 	m_Sorted = false;
 }
 
+void ChunkManager::RemoveChunk(const size_t t_IndexToRemove)
+{
+	if (t_IndexToRemove >= m_Chunks.size())
+		return;
+
+	m_DrawPool.FreeBucket(m_Chunks[t_IndexToRemove].m_BucketIDs);
+
+	std::swap(m_Chunks[t_IndexToRemove], m_Chunks.back());
+	m_Chunks.pop_back();
+	m_Sorted = false;
+}
+bool static compare(const glm::ivec3& l, const glm::ivec3& r)
+{
+	return true;
+}
+
+void ChunkManager::LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition)
+{
+	const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(t_PlayerPosition) / 32;
+	int leftXBound = playerPositionChunkSpace.x - m_ViewDistance;
+	int rightXBound = playerPositionChunkSpace.x + m_ViewDistance;
+	int farZBound = playerPositionChunkSpace.z - m_ViewDistance;
+	int closeZBound = playerPositionChunkSpace.z + m_ViewDistance;
+	for (int i = 0; i < m_Chunks.size(); i++)
+	{
+		Chunk& chunk = m_Chunks[i];
+		if (chunk.m_ChunkPosition.x < leftXBound || chunk.m_ChunkPosition.x > rightXBound 
+			|| chunk.m_ChunkPosition.z < farZBound || chunk.m_ChunkPosition.z > closeZBound)
+		{
+			RemoveChunk(i--);
+		}
+	}
+
+	//TODO: Store chunks in set not vector
+
+	std::queue<glm::ivec3> loadQueue;
+	std::set<glm::ivec3, Utilities::VectorCompare> loadSet;
+	// TODO: Other thread should read from load Queue and load chunk data, mesh it and send it to main thread
+
+	// TODO: Much more efficient way is to only do this when we go between chunks, and even then we can see what direction we moved in and only load that "sides" chunks
+	for (int x = -m_ViewDistance; x <= m_ViewDistance; x++)
+		for (int z = -m_ViewDistance; z <= m_ViewDistance; z++)
+			for (int y = -3; y <= 3; y++)
+			{
+				glm::ivec3 chunkPos{ x + playerPositionChunkSpace.x, y, z + playerPositionChunkSpace.z };
+				if (GetChunk(chunkPos) == m_Chunks.end())
+				{
+					loadQueue.emplace(chunkPos);
+				}
+			}
+
+	// TODO: this will be on the other thread lol, that's why it looks weird
+	while (!loadQueue.empty())
+	{
+		AddChunk(loadQueue.front());
+		loadSet.emplace(loadQueue.front());
+
+		glm::ivec3 neighbor = loadQueue.front();
+		neighbor.x -= 1;
+		loadSet.emplace(neighbor);
+		neighbor.x += 2;
+		loadSet.emplace(neighbor);
+		neighbor.x -= 1;
+		neighbor.y -= 1;
+		loadSet.emplace(neighbor);
+		neighbor.y += 2;
+		loadSet.emplace(neighbor);
+		neighbor.y -= 1;
+		neighbor.z -= 1;
+		loadSet.emplace(neighbor);
+		neighbor.z += 2;
+		loadSet.emplace(neighbor);
+
+		loadQueue.pop();
+	}
+
+	for (auto& i : loadSet)
+	{
+		m_MeshingQueue.emplace_back(i);
+		m_Sorted = false;
+	}
+	
+}
 
 void ChunkManager::MeshChunks()
 {
@@ -53,6 +135,7 @@ void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Proje
 
 void ChunkManager::ShowDebugInfo()
 {
+	ImGui::SliderInt("Render Distance", &m_ViewDistance, 1, 32);
 	if(ImGui::Button("Re-mesh All Chunks"))
 	{
 		LOG_PRINT("Re-meshing")
@@ -60,11 +143,10 @@ void ChunkManager::ShowDebugInfo()
 		{
 			m_MeshingQueue.push_back(chunk.m_ChunkPosition);
 		}
-		LOG_PRINT("MaxSize: " << maxSize);
+		LOG_PRINT("MaxSize: " << maxSize)
 	}
 	ImGui::Text("Chunk Count: %i", m_Chunks.size());
 	ImGui::Text("Chunk Data Size: %iMB", m_Chunks.size() * 32 * 32 * 32 * sizeof(int8_t)/1024/1024);
-	ImGui::Text("Vert count: %i", vertCount);
 	m_DrawPool.Debug();
 }
 
@@ -83,7 +165,7 @@ std::vector<Chunk>::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPos
 		m_Sorted = true;
 	}
 
-	auto ab = std::lower_bound(m_Chunks.begin(), m_Chunks.end(), t_ChunkPosition, [](const Chunk& first, const glm::ivec3& rh) {
+	auto found = std::lower_bound(m_Chunks.begin(), m_Chunks.end(), t_ChunkPosition, [](const Chunk& first, const glm::ivec3& rh) {
 		auto& lh = first.m_ChunkPosition;
 		return lh.x != rh.x ?
 			lh.x < rh.x
@@ -91,8 +173,8 @@ std::vector<Chunk>::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPos
 			lh.y < rh.y
 			: lh.z < rh.z; });
 	
-	if (ab != m_Chunks.end() && ab->m_ChunkPosition == t_ChunkPosition)
-		return ab;
+	if (found != m_Chunks.end() && found->m_ChunkPosition == t_ChunkPosition)
+		return found;
 
 	return m_Chunks.end();
 }
@@ -625,16 +707,17 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	}
 
 	bool notBlankChunk = false;
+
+	m_DrawPool.FreeBucket(buckets);
+
 	for (int i = 0; i < 6; i++)
 	{
 		Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
 		if (faceData[direction].empty())
 			continue;
 
-		if (buckets[direction] == nullptr)
-			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(faceData[direction].size()));
+		buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(faceData[direction].size()));
 
-		vertCount += faceData[direction].size();
 		notBlankChunk = true;
 		auto extraData = glm::ivec4(t_ToMesh, 0);
 		m_DrawPool.FillBucket(buckets[direction], faceData[direction], direction, extraData);

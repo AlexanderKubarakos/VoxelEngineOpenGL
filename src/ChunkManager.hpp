@@ -18,6 +18,9 @@ public:
 	void AddChunk(const glm::ivec3& t_ChunkPosition);
 	// Remove a Chunk
 	void RemoveChunk(const glm::ivec3& t_ChunkPosition);
+	void RemoveChunk(const size_t t_IndexToRemove);
+	// Load/Unload around player
+	void LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition);
 
 	// Mesh all chunks that are in the queue
 	void MeshChunks();
@@ -42,4 +45,5 @@ private:
 	std::vector<Chunk> m_Chunks;
 	std::deque<glm::ivec3> m_MeshingQueue;
 	bool m_Sorted;
+	int m_ViewDistance;
 };

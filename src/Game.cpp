@@ -36,16 +36,8 @@ void Game::Run()
 	constexpr int horizontalScale = 5;
 	constexpr int totalChunkCount = (verticalScale * 2 + 1) * (horizontalScale * 2 + 1) * (horizontalScale * 2 + 1);
 
-	for (int x = -horizontalScale; x <= horizontalScale; x++)
-	{
-		for (int y = -verticalScale; y <= verticalScale; y++)
-		{
-			for (int z = -horizontalScale; z <= horizontalScale; z++)
-			{
-				chunkManger.AddChunk(glm::vec3(x, y, z));
-			}
-		}
-	}
+	
+	
 	//chunkManger.AddChunk(glm::vec3(0,0,0));
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	bool wireframe = false;
@@ -55,6 +47,16 @@ void Game::Run()
         // Start Frame
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear buffers
         Utilities::ProcessFrame(m_Window.GetWindowPointer()); // Do start of frame actions, ex. calculate delta time
+
+		// Swap wireframe
+		if (Input::IsKeyPressed(GLFW_KEY_X))
+		{
+			if (wireframe)
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			else
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			wireframe = !wireframe;
+		}
 
 		// ImGUI start of frame
 		ImGui_ImplOpenGL3_NewFrame();
@@ -69,22 +71,14 @@ void Game::Run()
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
 
+		chunkManger.LoadUnloadAroundPlayer(m_Camera.CameraPos());
+		chunkManger.MeshChunks();
 		chunkManger.ShowDebugInfo();
-
-		// Swap wireframe
-		if (Input::IsKeyPressed(GLFW_KEY_X))
-		{
-			if (wireframe)
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			else
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			wireframe = !wireframe;
-		}
 
 		m_Camera.ProcessInput();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / static_cast<float>(m_Window.getExtent().y), 0.1f,10000.0f);
 
-		chunkManger.MeshChunks();
+
 		chunkManger.RenderChunks(m_Camera, projection);
 
         // End of frame

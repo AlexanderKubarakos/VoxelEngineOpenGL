@@ -40,7 +40,7 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
 	m_IndirectCallList.emplace_back(t_Size * 6, 1, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
-	m_IndirectCallList.back().m_OpenGLFirstVertex = m_BucketSize * 6 * (m_IndirectCallList.size() - 1);
+	m_IndirectCallList.back().m_OpenGLFirstVertex = m_BucketSize * 6 * (start / m_BucketSize);
 	m_EmptyBuckets.pop_back();
 
 	return m_IndirectCallList.back().m_BucketID;
@@ -80,9 +80,8 @@ void DrawPool::FreeBucket(BucketID t_Id)
 	// put the draw call we wish to remove to the back
 	std::swap(m_IndirectCallList[*t_Id], m_IndirectCallList.back());
 	std::swap(m_ExtraChunkDataList[*t_Id], m_ExtraChunkDataList[m_IndirectCallList.size()-1]);
-	m_IndirectCallList.pop_back();
-	//m_ExtraChunkDataList.pop_back();
 	*m_IndirectCallList[*t_Id].m_BucketID = *t_Id;
+	m_IndirectCallList.pop_back();
 	delete t_Id; // Free the memory for the old DAIC pointer
 }
 
@@ -149,7 +148,6 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 
 	auto shouldRender = [&](DAIC& daic)->bool
 		{
-			
 			if (!m_SideOcclusionOverride[daic.m_Direction])
 				return false;
 

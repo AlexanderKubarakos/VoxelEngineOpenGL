@@ -42,4 +42,15 @@ namespace Utilities
 	double GetDeltaTime();
 	std::string vectorToString(glm::vec3 t_Vec);
 	std::string vectorToString(glm::ivec3 t_Vec);
+	struct VectorCompare {
+		template <typename T>
+		bool operator()(const T& lhs, const T& rhs) const {
+			return lhs.x != rhs.x ?
+				lhs.x < rhs.x
+				: lhs.y != rhs.y ?
+				lhs.y < rhs.y
+				: lhs.z < rhs.z;
+		}
+	};
 };
+
