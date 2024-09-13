@@ -8,7 +8,7 @@
 
 static int maxSize = 0;
 
-ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_Sorted {false}, m_ViewDistance {8}
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12}
 {
 
 }
@@ -17,68 +17,66 @@ ChunkManager::~ChunkManager() = default;
 
 void ChunkManager::AddChunk(const glm::ivec3& t_ChunkPosition)
 {
-	m_Chunks.emplace_back(t_ChunkPosition);
+	m_Chunks.emplace(t_ChunkPosition, t_ChunkPosition);
 }
 
 void ChunkManager::RemoveChunk(const glm::ivec3& t_ChunkPosition)
 {
 	auto toRemove = GetChunk(t_ChunkPosition);
 
-	if (toRemove == m_Chunks.end())
-		return;
-
-	m_DrawPool.FreeBucket(toRemove->m_BucketIDs);
-
-	std::iter_swap(toRemove, --m_Chunks.end());
-	m_Chunks.pop_back();
-	m_Sorted = false;
+	RemoveChunk(toRemove);
 }
 
-void ChunkManager::RemoveChunk(const size_t t_IndexToRemove)
+ChunkMap::iterator ChunkManager::RemoveChunk(ChunkMap::iterator& t_Iterator)
 {
-	if (t_IndexToRemove >= m_Chunks.size())
-		return;
+	if (t_Iterator == m_Chunks.end())
+		return m_Chunks.end();
 
-	m_DrawPool.FreeBucket(m_Chunks[t_IndexToRemove].m_BucketIDs);
+	m_DrawPool.FreeBucket(t_Iterator->second.m_BucketIDs);
 
-	std::swap(m_Chunks[t_IndexToRemove], m_Chunks.back());
-	m_Chunks.pop_back();
-	m_Sorted = false;
-}
-bool static compare(const glm::ivec3& l, const glm::ivec3& r)
-{
-	return true;
+	return m_Chunks.erase(t_Iterator);
 }
 
 void ChunkManager::LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition)
 {
+	if (!m_LoadUnloadChunks)
+		return;
+
 	const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(t_PlayerPosition) / 32;
 	int leftXBound = playerPositionChunkSpace.x - m_ViewDistance;
 	int rightXBound = playerPositionChunkSpace.x + m_ViewDistance;
 	int farZBound = playerPositionChunkSpace.z - m_ViewDistance;
 	int closeZBound = playerPositionChunkSpace.z + m_ViewDistance;
-	for (int i = 0; i < m_Chunks.size(); i++)
-	{
-		Chunk& chunk = m_Chunks[i];
-		if (chunk.m_ChunkPosition.x < leftXBound || chunk.m_ChunkPosition.x > rightXBound 
-			|| chunk.m_ChunkPosition.z < farZBound || chunk.m_ChunkPosition.z > closeZBound)
+
+	auto inViewRange = [=](const auto& item)
 		{
-			RemoveChunk(i--);
+			auto const& [key, chunk] = item;
+			return key.x < leftXBound || key.x > rightXBound
+				|| key.z < farZBound || key.z > closeZBound;
+		};
+
+	for (auto first = m_Chunks.begin(), last = m_Chunks.end(); first != last;)
+	{
+		if (inViewRange(*first))
+		{
+			first = RemoveChunk(first);
+		}
+		else
+		{
+			++first;
 		}
 	}
-
-	//TODO: Store chunks in set not vector
 
 	std::queue<glm::ivec3> loadQueue;
 	std::set<glm::ivec3, Utilities::VectorCompare> loadSet;
 	// TODO: Other thread should read from load Queue and load chunk data, mesh it and send it to main thread
 
 	// TODO: Much more efficient way is to only do this when we go between chunks, and even then we can see what direction we moved in and only load that "sides" chunks
-	for (int x = -m_ViewDistance; x <= m_ViewDistance; x++)
-		for (int z = -m_ViewDistance; z <= m_ViewDistance; z++)
+	for (int x = -m_ViewDistance + playerPositionChunkSpace.x; x <= m_ViewDistance + playerPositionChunkSpace.x; x++)
+		for (int z = -m_ViewDistance + playerPositionChunkSpace.z; z <= m_ViewDistance + playerPositionChunkSpace.z; z++)
 			for (int y = -3; y <= 3; y++)
 			{
-				glm::ivec3 chunkPos{ x + playerPositionChunkSpace.x, y, z + playerPositionChunkSpace.z };
+				glm::ivec3 chunkPos{ x, y, z };
 				if (GetChunk(chunkPos) == m_Chunks.end())
 				{
 					loadQueue.emplace(chunkPos);
@@ -113,9 +111,8 @@ void ChunkManager::LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition)
 	for (auto& i : loadSet)
 	{
 		m_MeshingQueue.emplace_back(i);
-		m_Sorted = false;
 	}
-	
+
 }
 
 void ChunkManager::MeshChunks()
@@ -135,13 +132,14 @@ void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Proje
 
 void ChunkManager::ShowDebugInfo()
 {
+	ImGui::Checkbox("Load and Unload Chunks Around Player", &m_LoadUnloadChunks);
 	ImGui::SliderInt("Render Distance", &m_ViewDistance, 1, 32);
 	if(ImGui::Button("Re-mesh All Chunks"))
 	{
 		LOG_PRINT("Re-meshing")
 		for (auto& chunk : m_Chunks)
 		{
-			m_MeshingQueue.push_back(chunk.m_ChunkPosition);
+			m_MeshingQueue.push_back(chunk.second.m_ChunkPosition);
 		}
 		LOG_PRINT("MaxSize: " << maxSize)
 	}
@@ -150,33 +148,9 @@ void ChunkManager::ShowDebugInfo()
 	m_DrawPool.Debug();
 }
 
-std::vector<Chunk>::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPosition)
+ChunkMap::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPosition)
 {
-	if (!m_Sorted)
-	{
-		std::sort(m_Chunks.begin(), m_Chunks.end(), [](const Chunk& first, const Chunk& last) {
-			auto& lh = first.m_ChunkPosition;
-			auto& rh = last.m_ChunkPosition;
-			return lh.x != rh.x ?
-				lh.x < rh.x
-				: lh.y != rh.y ?
-				lh.y < rh.y
-				: lh.z < rh.z; });
-		m_Sorted = true;
-	}
-
-	auto found = std::lower_bound(m_Chunks.begin(), m_Chunks.end(), t_ChunkPosition, [](const Chunk& first, const glm::ivec3& rh) {
-		auto& lh = first.m_ChunkPosition;
-		return lh.x != rh.x ?
-			lh.x < rh.x
-			: lh.y != rh.y ?
-			lh.y < rh.y
-			: lh.z < rh.z; });
-	
-	if (found != m_Chunks.end() && found->m_ChunkPosition == t_ChunkPosition)
-		return found;
-
-	return m_Chunks.end();
+	return m_Chunks.find(t_ChunkPosition);
 }
 
 void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
@@ -187,34 +161,34 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		return;
 
 	auto& chunk = *itr;
-	auto blockData = chunk.m_BlockData;
-	auto& buckets = chunk.m_BucketIDs;
+	auto blockData = chunk.second.m_BlockData;
+	auto& buckets = chunk.second.m_BucketIDs;
 
 	std::array<int8_t*, 6> neighbors {nullptr};
 
 	auto otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 1, 0));
 	if (otherChunk != m_Chunks.end())
-		neighbors[Utilities::UP] = otherChunk->m_BlockData;
+		neighbors[Utilities::UP] = otherChunk->second.m_BlockData;
 
 	otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, -1, 0));
 	if (otherChunk != m_Chunks.end())
-		neighbors[Utilities::DOWN] = otherChunk->m_BlockData;
+		neighbors[Utilities::DOWN] = otherChunk->second.m_BlockData;
 
 	otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 0, 1));
 	if (otherChunk != m_Chunks.end())
-		neighbors[Utilities::SOUTH] = otherChunk->m_BlockData;
+		neighbors[Utilities::SOUTH] = otherChunk->second.m_BlockData;
 
 	otherChunk = GetChunk(t_ToMesh + glm::ivec3(0, 0, -1));
 	if (otherChunk != m_Chunks.end())
-		neighbors[Utilities::NORTH] = otherChunk->m_BlockData;
+		neighbors[Utilities::NORTH] = otherChunk->second.m_BlockData;
 
 	otherChunk = GetChunk(t_ToMesh + glm::ivec3(1, 0, 0));
 	if (otherChunk != m_Chunks.end())
-		neighbors[Utilities::EAST] = otherChunk->m_BlockData;
+		neighbors[Utilities::EAST] = otherChunk->second.m_BlockData;
 
 	otherChunk = GetChunk(t_ToMesh + glm::ivec3(-1, 0, 0));
 	if (otherChunk != m_Chunks.end())
-		neighbors[Utilities::WEST] = otherChunk->m_BlockData;
+		neighbors[Utilities::WEST] = otherChunk->second.m_BlockData;
 
 	std::array<std::vector<FaceVertex>, 6> faceData;
 

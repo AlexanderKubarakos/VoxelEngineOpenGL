@@ -5,6 +5,9 @@
 
 #include <vector>
 #include <deque>
+#include <unordered_map>
+
+#include "ChunkMap.hpp"
 
 // Manages a list of chunks, allowing removal and adding
 // and all rendering functionality too
@@ -18,10 +21,8 @@ public:
 	void AddChunk(const glm::ivec3& t_ChunkPosition);
 	// Remove a Chunk
 	void RemoveChunk(const glm::ivec3& t_ChunkPosition);
-	void RemoveChunk(const size_t t_IndexToRemove);
 	// Load/Unload around player
 	void LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition);
-
 	// Mesh all chunks that are in the queue
 	void MeshChunks();
 	// Render all chunks in the draw pool
@@ -36,14 +37,15 @@ public:
 	ChunkManager& operator=(ChunkManager&& t_Other) noexcept = delete;
 
 private:
+	ChunkMap::iterator RemoveChunk(ChunkMap::iterator& t_Iterator);
 	// Get a chunk from the list
-	std::vector<Chunk>::iterator GetChunk(const glm::ivec3& t_ChunkPosition);
+	ChunkMap::iterator GetChunk(const glm::ivec3& t_ChunkPosition);
 	// Mesh a chunk
 	void MeshChunk(const glm::ivec3& t_ToMesh);
 
 	DrawPool m_DrawPool;
-	std::vector<Chunk> m_Chunks;
+	ChunkMap m_Chunks;
 	std::deque<glm::ivec3> m_MeshingQueue;
-	bool m_Sorted;
+	bool m_LoadUnloadChunks;
 	int m_ViewDistance;
 };

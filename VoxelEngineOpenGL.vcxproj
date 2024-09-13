@@ -480,6 +480,7 @@
     <ClInclude Include="includes\KHR\khrplatform.h" />
     <ClInclude Include="src\Chunk.hpp" />
     <ClInclude Include="src\ChunkManager.hpp" />
+    <ClInclude Include="src\ChunkMap.hpp" />
     <ClInclude Include="src\DrawPool.hpp" />
     <ClInclude Include="src\FastNoiseLite.h" />
     <ClInclude Include="src\Input.hpp" />

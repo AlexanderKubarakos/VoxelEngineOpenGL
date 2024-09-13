@@ -1066,6 +1066,9 @@
     <ClInclude Include="includes\FastNoise\SmartNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ChunkMap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="includes\glm\detail\func_common.inl">
