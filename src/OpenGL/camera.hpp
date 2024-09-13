@@ -59,6 +59,7 @@ public:
 		m_Pitch = std::clamp(m_Pitch, -89.0f, 89.0f);
 
 		UpdateCameraVectors();
+		m_AtomicCameraPos.store(m_CameraPos);
 	}
 
 	glm::vec3 CameraPos() const
@@ -81,6 +82,11 @@ public:
 		return m_CameraRight;
 	}
 
+	glm::vec3 GetAtomicCameraPos() const
+	{
+		return m_AtomicCameraPos.load();
+	}
+
 private:
 	float m_MoveSpeed;
 	float m_Sensitivity;
@@ -90,6 +96,8 @@ private:
 	glm::vec3 m_CameraRight;
 	float m_Yaw;
 	float m_Pitch;
+
+	std::atomic<glm::vec3> m_AtomicCameraPos;
 
 	void UpdateCameraVectors()
 	{

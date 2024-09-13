@@ -37,6 +37,14 @@ ChunkMap::iterator ChunkManager::RemoveChunk(ChunkMap::iterator& t_Iterator)
 	return m_Chunks.erase(t_Iterator);
 }
 
+void ThreadedUnloadAndLoad(const Camera& camera)
+{
+	while (true)
+	{
+		glm::vec3 cameraPos = camera.GetAtomicCameraPos();
+	}
+}
+
 void ChunkManager::LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition)
 {
 	if (!m_LoadUnloadChunks)
