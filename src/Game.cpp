@@ -35,6 +35,8 @@ void Game::Run()
 	constexpr int verticalScale = 5;
 	constexpr int horizontalScale = 5;
 	constexpr int totalChunkCount = (verticalScale * 2 + 1) * (horizontalScale * 2 + 1) * (horizontalScale * 2 + 1);
+
+	
 	
 	//chunkManger.AddChunk(glm::vec3(0,0,0));
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -69,7 +71,7 @@ void Game::Run()
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
 
-		chunkManger.LoadUnloadAroundPlayer(m_Camera);
+		chunkManger.LoadUnloadAroundPlayer(m_Camera.CameraPos());
 		chunkManger.MeshChunks();
 		chunkManger.ShowDebugInfo();
 
@@ -87,10 +89,8 @@ void Game::Run()
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		LOG_PRINT("HI");
 		glfwSwapBuffers(m_Window.GetWindowPointer()); // Swap buffers
         glfwPollEvents(); // Poll events
-		LOG_PRINT("BYE")
 		if (m_Window.ShouldWindowClose() || Input::IsKeyDown(GLFW_KEY_ESCAPE)) // Close game if needed
 		{
 			Stop();

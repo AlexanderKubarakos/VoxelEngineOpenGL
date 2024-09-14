@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <deque>
-#include <queue>
 #include <unordered_map>
 
 #include "ChunkMap.hpp"
@@ -23,7 +22,7 @@ public:
 	// Remove a Chunk
 	void RemoveChunk(const glm::ivec3& t_ChunkPosition);
 	// Load/Unload around player
-	void LoadUnloadAroundPlayer(const Camera& t_Camera);
+	void LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition);
 	// Mesh all chunks that are in the queue
 	void MeshChunks();
 	// Render all chunks in the draw pool
@@ -49,11 +48,4 @@ private:
 	std::deque<glm::ivec3> m_MeshingQueue;
 	bool m_LoadUnloadChunks;
 	int m_ViewDistance;
-
-	// Threading
-	std::thread m_ChunkLoadingUnloadingThread;
-	std::mutex m_ChunkMapMutex;
-	std::queue<std::array<DrawPool::BucketID, 6>> m_UnloadQueue;
-	void ThreadedUnloadAndLoad(const Camera& t_Camera, std::mutex& t_Mutex, ChunkMap& t_ChunkMap,
-		std::queue<std::array<DrawPool::BucketID, 6>>& t_UnloadQueue);
 };
