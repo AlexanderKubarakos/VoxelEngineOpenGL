@@ -8,12 +8,15 @@
 
 static int maxSize = 0;
 
-ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12}
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {8}
 {
 
 }
 
-ChunkManager::~ChunkManager() = default;
+ChunkManager::~ChunkManager()
+{
+	std::lock_guard<std::mutex> lock(m_ChunkMapMutex);
+}
 
 void ChunkManager::AddChunk(const glm::ivec3& t_ChunkPosition)
 {
@@ -37,20 +40,114 @@ ChunkMap::iterator ChunkManager::RemoveChunk(ChunkMap::iterator& t_Iterator)
 	return m_Chunks.erase(t_Iterator);
 }
 
-void ThreadedUnloadAndLoad(const Camera& camera)
+void ChunkManager::ThreadedUnloadAndLoad(const Camera& t_Camera, std::mutex& t_Mutex, ChunkMap& t_ChunkMap,
+	std::queue<std::array<DrawPool::BucketID,6>>& t_UnloadQueue) //, std::queue<glm::ivec3>& t_LoadQueue)
 {
+	
 	while (true)
 	{
-		glm::vec3 cameraPos = camera.GetAtomicCameraPos();
+		constexpr int viewDistance = 4;
+		//glm::vec3 playerPosition = t_Camera.GetAtomicCameraPos();
+		glm::vec3 playerPosition{ 0,0,0 };
+		
+		std::unique_lock<std::mutex> lock(t_Mutex);
+		int a = 0;
+		continue;
+		const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(playerPosition) / 32;
+		int leftXBound = playerPositionChunkSpace.x - viewDistance;
+		int rightXBound = playerPositionChunkSpace.x + viewDistance;
+		int farZBound = playerPositionChunkSpace.z - viewDistance;
+		int closeZBound = playerPositionChunkSpace.z + viewDistance;
+
+		auto notInViewRange = [=](const auto& item)
+		{
+			auto const& [key, chunk] = item;
+			return key.x < leftXBound || key.x > rightXBound
+				|| key.z < farZBound || key.z > closeZBound;
+		};
+
+		for (auto first = t_ChunkMap.begin(), last = t_ChunkMap.end(); first != last;)
+		{
+			if (notInViewRange(*first))
+			{
+				//t_UnloadQueue.push(first->second.m_BucketIDs);
+
+				//first = t_ChunkMap.erase(first);
+				++first;
+			}
+			else
+			{
+				++first;
+			}
+		}
+
+		//std::queue<glm::ivec3> loadQueue;
+		//std::set<glm::ivec3, Utilities::VectorCompare> loadSet;
+		//for (int x = -m_ViewDistance + playerPositionChunkSpace.x; x <= m_ViewDistance + playerPositionChunkSpace.x; x++)
+		//	for (int z = -m_ViewDistance + playerPositionChunkSpace.z; z <= m_ViewDistance + playerPositionChunkSpace.z; z++)
+		//		for (int y = -3; y <= 3; y++)
+		//		{
+		//			glm::ivec3 chunkPos{ x, y, z };
+		//			if (GetChunk(chunkPos) == m_Chunks.end())
+		//			{
+		//				loadQueue.emplace(chunkPos);
+		//			}
+		//		}
+
+		//// TODO: this will be on the other thread lol, that's why it looks weird
+		//while (!loadQueue.empty())
+		//{
+		//	AddChunk(loadQueue.front());
+		//	loadSet.emplace(loadQueue.front());
+
+		//	glm::ivec3 neighbor = loadQueue.front();
+		//	neighbor.x -= 1;
+		//	loadSet.emplace(neighbor);
+		//	neighbor.x += 2;
+		//	loadSet.emplace(neighbor);
+		//	neighbor.x -= 1;
+		//	neighbor.y -= 1;
+		//	loadSet.emplace(neighbor);
+		//	neighbor.y += 2;
+		//	loadSet.emplace(neighbor);
+		//	neighbor.y -= 1;
+		//	neighbor.z -= 1;
+		//	loadSet.emplace(neighbor);
+		//	neighbor.z += 2;
+		//	loadSet.emplace(neighbor);
+
+		//	loadQueue.pop();
+		//}
+
+		//for (auto& i : loadSet)
+		//{
+		//	//m_MeshingQueue.emplace_back(i);
+		//}
 	}
 }
 
-void ChunkManager::LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition)
+void ChunkManager::LoadUnloadAroundPlayer(const Camera& t_Camera)
 {
+	static bool firstTime = true;
+	if (!firstTime)
+	{
+		std::unique_lock<std::mutex> lock(m_ChunkMapMutex, std::defer_lock);
+		if(lock.try_lock())
+		{
+			while (!m_UnloadQueue.empty())
+			{
+				m_DrawPool.FreeBucket(m_UnloadQueue.front());
+				m_UnloadQueue.pop();
+			}
+		}
+		return;
+	}
+		
+	firstTime = false;
 	if (!m_LoadUnloadChunks)
 		return;
 
-	const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(t_PlayerPosition) / 32;
+	const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(t_Camera.GetAtomicCameraPos()) / 32;
 	int leftXBound = playerPositionChunkSpace.x - m_ViewDistance;
 	int rightXBound = playerPositionChunkSpace.x + m_ViewDistance;
 	int farZBound = playerPositionChunkSpace.z - m_ViewDistance;
@@ -121,16 +218,19 @@ void ChunkManager::LoadUnloadAroundPlayer(const glm::vec3& t_PlayerPosition)
 		m_MeshingQueue.emplace_back(i);
 	}
 
+	m_ChunkLoadingUnloadingThread = std::thread{ &ChunkManager::ThreadedUnloadAndLoad, this, std::ref(t_Camera),  std::ref(m_ChunkMapMutex),  std::ref(m_Chunks),  std::ref(m_UnloadQueue) };
 }
 
 void ChunkManager::MeshChunks()
 {
+	std::unique_lock<std::mutex> lock(m_ChunkMapMutex, std::defer_lock);
+	if (!lock.try_lock())
+		return;
 	while (!m_MeshingQueue.empty())
 	{
 		MeshChunk(m_MeshingQueue.front());
 		m_MeshingQueue.pop_front();
 	}
-	
 }
 
 void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Projection)
@@ -164,6 +264,7 @@ ChunkMap::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPosition)
 void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 {
 	TIMER_START(1)
+	// TODO: make that a try to lock, meshing can wait till we dont have to freeze
 	auto itr = GetChunk(t_ToMesh);
 	if (itr == m_Chunks.end())
 		return;
@@ -705,6 +806,7 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 		m_DrawPool.FillBucket(buckets[direction], faceData[direction], direction, extraData);
 		maxSize = std::max(maxSize, static_cast<int>(faceData[direction].size()));
 	}
+
 
 	// Only print time if not trivial chunk
 	if (notBlankChunk)
