@@ -19,6 +19,8 @@
 #define TIMER_END(ID, Message) 
 #endif
 
+#define VECTOR_TO_STRING(Vector) "x:" << (Vector).x << " y:" << (Vector).y << " z:" << (Vector).z
+
 //#if _DEBUG 
 #define LOG_PRINT(Message) std::cerr << Message << '\n';
 #define ERROR_PRINT(Message) std::cerr << Message << '\n';

@@ -66,13 +66,12 @@ void Game::Run()
 		ImGui::Begin("Debug");
 		ImGui::Text("Delta Time: %fms", Utilities::GetDeltaTime() * 1000);
 		ImGui::Text("FPS: %.2f", 1 / Utilities::GetDeltaTime());
-		
+		ImGui::Text("Camera Position: x:%.2f, y:%.2f, z:%.2f", m_Camera.GetAtomicCameraPos().x, m_Camera.GetAtomicCameraPos().y, m_Camera.GetAtomicCameraPos().z);
 		ImGui::Checkbox("Show Demo Window", &showDemoWindow);
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
 
-		chunkManger.LoadUnloadAroundPlayer(m_Camera.CameraPos());
-		chunkManger.MeshChunks();
+		chunkManger.LoadUnloadAroundPlayer(m_Camera);
 		chunkManger.ShowDebugInfo();
 
 		m_Camera.ProcessInput();

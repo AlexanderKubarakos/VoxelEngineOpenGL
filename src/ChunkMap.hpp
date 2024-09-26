@@ -18,4 +18,4 @@ struct VecFunc
     }
 };
 
-typedef std::unordered_map <glm::ivec3, Chunk, VecFunc, VecFunc> ChunkMap;
+typedef std::unordered_map <glm::ivec3, std::shared_ptr<Chunk>, VecFunc, VecFunc> ChunkMap;
