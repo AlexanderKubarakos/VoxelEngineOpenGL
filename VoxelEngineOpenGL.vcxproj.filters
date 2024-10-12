@@ -81,6 +81,9 @@
     <ClCompile Include="src\ChunkManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\AtomicQueue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="libs\glfw3.lib" />
@@ -1067,6 +1070,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ChunkMap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AtomicQueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

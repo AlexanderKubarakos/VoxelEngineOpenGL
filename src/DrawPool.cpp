@@ -59,7 +59,7 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<FaceVertex>& t_Data, 
 		ERROR_PRINT("Warning: Trying to fill a bucket with a nullptr ID, perhaps intentional")
 		return;
 	}
-		
+
 	// find start of the bucket for t_Id, m.BaseVertex is relative to m_Start
 	FaceVertex* start = m_Start + m_IndirectCallList[*t_Id].m_VertexPoolPosition;
 	memcpy(start, t_Data.data(), t_Data.size() * sizeof(FaceVertex));

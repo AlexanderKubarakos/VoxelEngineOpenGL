@@ -7,13 +7,19 @@
 #include <set>
 
 static int maxSize = 0;
-
+std::atomic_bool stopToken{ false };
 ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12}
 {
 
 }
 
-ChunkManager::~ChunkManager() = default;
+ChunkManager::~ChunkManager()
+{
+	stopToken = true;
+	while (stopToken)
+		m_ChunkUpdatesVariable.notify_all();
+	m_Thread.join();
+}
 
 void ChunkManager::AddChunk(const glm::ivec3& t_ChunkPosition)
 {
@@ -53,14 +59,16 @@ void ChunkManager::LoadUnloadAroundPlayer(const Camera& camera)
 	}
 }
 
+
+
 void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 {
 	while (true)
 	{
-		LOG_PRINT("Threaded Shit Locking")
-		std::unique_lock lock {m_ChunkQueueMutex};
+		std::unique_lock lock { m_Mutex };
 		m_ChunkUpdatesVariable.wait(lock);
-		LOG_PRINT("Threaded Shit")
+		if (stopToken)
+			break;
 		glm::vec3 cameraPos = camera.GetAtomicCameraPos();
 		const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(cameraPos) / 32;
 		int leftXBound = playerPositionChunkSpace.x - m_ViewDistance;
@@ -68,6 +76,8 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 		int farZBound = playerPositionChunkSpace.z - m_ViewDistance;
 		int closeZBound = playerPositionChunkSpace.z + m_ViewDistance;
 
+		std::deque<glm::ivec3> removeQueue;
+		std::deque<std::shared_ptr<Chunk>> loadQueue;
 		auto inViewRange = [=](const auto& item)
 			{
 				auto const& [key, chunk] = item;
@@ -79,15 +89,11 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 		{
 			if (inViewRange(*first))
 			{
-				m_ChunksToRemove.push(first->first);
+				removeQueue.push_back(first->first);
 			}
 			++first;
 		}
-
-		std::queue<glm::ivec3> loadQueue;
-		std::set<glm::ivec3, Utilities::VectorCompare> loadSet;
-		// TODO: Other thread should read from load Queue and load chunk data, mesh it and send it to main thread
-
+		
 		// TODO: Much more efficient way is to only do this when we go between chunks, and even then we can see what direction we moved in and only load that "sides" chunks
 		for (int x = -m_ViewDistance + playerPositionChunkSpace.x; x <= m_ViewDistance + playerPositionChunkSpace.x; x++)
 			for (int z = -m_ViewDistance + playerPositionChunkSpace.z; z <= m_ViewDistance + playerPositionChunkSpace.z; z++)
@@ -96,46 +102,23 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 					glm::ivec3 chunkPos{ x, y, z };
 					if (GetChunk(chunkPos) == m_Chunks.end())
 					{
-						loadQueue.emplace(chunkPos);
+						loadQueue.emplace_back(std::make_shared<Chunk>(chunkPos));
 					}
 				}
 
-		// TODO: this will be on the other thread lol, that's why it looks weird
-		while (!loadQueue.empty())
-		{
-			m_ChunksToAdd.push(std::make_shared<Chunk>(loadQueue.front()));
-			loadSet.emplace(loadQueue.front());
-
-			glm::ivec3 neighbor = loadQueue.front();
-			neighbor.x -= 1;
-			loadSet.emplace(neighbor);
-			neighbor.x += 2;
-			loadSet.emplace(neighbor);
-			neighbor.x -= 1;
-			neighbor.y -= 1;
-			loadSet.emplace(neighbor);
-			neighbor.y += 2;
-			loadSet.emplace(neighbor);
-			neighbor.y -= 1;
-			neighbor.z -= 1;
-			loadSet.emplace(neighbor);
-			neighbor.z += 2;
-			loadSet.emplace(neighbor);
-
-			loadQueue.pop();
-		}
-
-		for (auto& i : loadSet)
-		{
-			//m_MeshingQueue.emplace_back(i);
-		}
+		for (auto& i : loadQueue)
+			m_ChunksToAdd.push_back(i);
+		for (auto& i : removeQueue)
+			m_ChunksToRemove.push_back(i);
 	}
+	stopToken = false;
 }
 
 static glm::ivec3 previousChunk = { -999999,0,0 };
 
 void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
 {
+	
 	if (previousChunk != glm::ivec3(t_PlayerPosition / 32.0f))
 	{
 		LOG_PRINT("Changing chunk...")
@@ -143,43 +126,67 @@ void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
 		m_ChunkUpdatesVariable.notify_one();
 	}
 
-	std::unique_lock lock{ m_ChunkQueueMutex, std::defer_lock };
+	std::unique_lock lock { m_Mutex, std::defer_lock };
 
 	// 1. Make any changes to the Hashmap, add new chunks, remove old chunks, checking if all threads are finished first, if not skip to next frame
 	if (lock.try_lock())
 	{
+		bool didWork = false;
+		TIMER_START(1)
 		while (!m_ChunksToRemove.empty())
 		{
-			auto& bucket = m_Chunks.at(m_ChunksToRemove.front())->m_BucketIDs;
+			didWork = true;
+			auto& bucket = m_Chunks.at(m_ChunksToRemove.back())->m_BucketIDs;
 			m_DrawPool.FreeBucket(bucket);
-			m_Chunks.erase(m_ChunksToRemove.front());
-			m_ChunksToRemove.pop();
+			m_Chunks.erase(m_ChunksToRemove.back());
+			m_ChunksToRemove.pop_back();
 		}
-
+		if (didWork)
+		{
+			TIMER_END(1, "Erase Time: ")
+		}
+		
+		TIMER_START(2)
 		while (!m_ChunksToAdd.empty())
 		{
-			m_Chunks.emplace(m_ChunksToAdd.front()->m_ChunkPosition, m_ChunksToAdd.front());
-			m_MeshingQueue.emplace_back(m_ChunksToAdd.front()->m_ChunkPosition);
-			m_ChunksToAdd.pop();
+			didWork = true;
+			m_Chunks.emplace(m_ChunksToAdd.back()->m_ChunkPosition, m_ChunksToAdd.back());
+			m_ChunksToMesh.emplace_back(m_ChunksToAdd.back()->m_ChunkPosition);
+			m_ChunksToAdd.pop_back();
 		}
-
-		while (!m_MeshingQueue.empty())
+		if (didWork)
 		{
-			MeshChunk(m_MeshingQueue.front());
-			m_MeshingQueue.pop_front();
+			TIMER_END(2, "Add Time: ")
+		}
+		TIMER_START(3)
+		while (!m_ChunksToMesh.empty())
+		{
+			didWork = true;
+			glm::ivec3 pos = m_ChunksToMesh.back();
+			m_ChunksToMesh.pop_back();
+			MeshChunk(pos);
+			//pos.x -= 1;
+			//MeshChunk(pos);
+			//pos.x += 2;
+			//MeshChunk(pos);
+			//pos.x -= 1;
+			//pos.y -= 1;
+			//MeshChunk(pos);
+			//pos.y += 2;
+			//MeshChunk(pos);
+			//pos.y -= 1;
+			//pos.z -= 1;
+			//MeshChunk(pos);
+			//pos.z += 2;
+			//MeshChunk(pos);
+		}
+		if (didWork)
+		{
+			TIMER_END(3, "Mesh Time: ")
 		}
 	}
 	// 2. Queue New Jobs 
 	// 3. Process returned work, put data into draw pool, free buckets, 
-}
-
-void ChunkManager::MeshChunks()
-{
-	while (!m_MeshingQueue.empty())
-	{
-		MeshChunk(m_MeshingQueue.front());
-		m_MeshingQueue.pop_front();
-	}
 }
 
 void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Projection)
@@ -196,7 +203,7 @@ void ChunkManager::ShowDebugInfo()
 		LOG_PRINT("Re-meshing")
 		for (auto& chunk : m_Chunks)
 		{
-			m_MeshingQueue.push_back(chunk.second->m_ChunkPosition);
+			m_ChunksToMesh.push_back(chunk.second->m_ChunkPosition);
 		}
 		LOG_PRINT("MaxSize: " << maxSize)
 	}
@@ -210,6 +217,8 @@ ChunkMap::iterator ChunkManager::GetChunk(const glm::ivec3& t_ChunkPosition)
 	return m_Chunks.find(t_ChunkPosition);
 }
 
+
+//TODO: add per side re meshing, aka if a chunk on this chunks top boarder loads, we only need to redo that bucket
 void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 {
 	TIMER_START(1)
@@ -758,6 +767,6 @@ void ChunkManager::MeshChunk(const glm::ivec3& t_ToMesh)
 	// Only print time if not trivial chunk
 	if (notBlankChunk)
 	{
-		TIMER_END(1, "Meshing time: ")
+		//TIMER_END(1, "Meshing time: ")
 	}
 }

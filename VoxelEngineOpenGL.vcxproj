@@ -146,6 +146,7 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="includes\glm\detail\glm.cpp" />
     <ClCompile Include="includes\glm\glm.cppm" />
+    <ClCompile Include="src\AtomicQueue.cpp" />
     <ClCompile Include="src\Chunk.cpp" />
     <ClCompile Include="src\ChunkManager.cpp" />
     <ClCompile Include="src\DrawPool.cpp" />
@@ -478,6 +479,7 @@
     <ClInclude Include="includes\glm\vec4.hpp" />
     <ClInclude Include="includes\glm\vector_relational.hpp" />
     <ClInclude Include="includes\KHR\khrplatform.h" />
+    <ClInclude Include="src\AtomicQueue.h" />
     <ClInclude Include="src\Chunk.hpp" />
     <ClInclude Include="src\ChunkManager.hpp" />
     <ClInclude Include="src\ChunkMap.hpp" />

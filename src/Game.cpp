@@ -31,12 +31,7 @@ void Game::Run()
 	ImGui_ImplGlfw_InitForOpenGL(m_Window.GetWindowPointer(), true);
 	ImGui_ImplOpenGL3_Init();
 
-	ChunkManager chunkManger;
-	constexpr int verticalScale = 5;
-	constexpr int horizontalScale = 5;
-	constexpr int totalChunkCount = (verticalScale * 2 + 1) * (horizontalScale * 2 + 1) * (horizontalScale * 2 + 1);
-
-	
+	ChunkManager chunkManager;
 	
 	//chunkManger.AddChunk(glm::vec3(0,0,0));
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -71,14 +66,12 @@ void Game::Run()
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
 
-		chunkManger.LoadUnloadAroundPlayer(m_Camera);
-		chunkManger.ShowDebugInfo();
-
 		m_Camera.ProcessInput();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(m_Window.getExtent().x) / static_cast<float>(m_Window.getExtent().y), 0.1f,10000.0f);
 
-
-		chunkManger.RenderChunks(m_Camera, projection);
+		chunkManager.LoadUnloadAroundPlayer(m_Camera);
+		chunkManager.ShowDebugInfo();
+		chunkManager.RenderChunks(m_Camera, projection);
 
         // End of frame
         Input::ResetInputs(m_Window); // Resets all need inputs

@@ -7,13 +7,13 @@
 #include <chrono>
 #include <iostream>
 
-#define ENABLE_TIMER 0
+#define ENABLE_TIMER 1
 
 #if ENABLE_TIMER
 #define TIMER_START(ID) auto timerStart##ID = std::chrono::high_resolution_clock::now();
 #define TIMER_END(ID, Message) auto timerEnd##ID = std::chrono::high_resolution_clock::now(); \
-	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(timerEnd##ID-timerStart##ID); \
-	std::cout << (Message) << microseconds.count() << " microseconds\n";
+	auto microseconds##ID = std::chrono::duration_cast<std::chrono::microseconds>(timerEnd##ID-timerStart##ID); \
+	std::cout << (Message) << microseconds##ID.count() << " microseconds\n";
 #else
 #define TIMER_START(ID)
 #define TIMER_END(ID, Message) 

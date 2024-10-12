@@ -40,20 +40,20 @@ private:
 	ChunkMap::iterator RemoveChunk(ChunkMap::iterator& t_Iterator);
 	// Get a chunk from the list
 	ChunkMap::iterator GetChunk(const glm::ivec3& t_ChunkPosition);
-	// Mesh all chunks that are in the queue
-	void MeshChunks();
 	// Mesh a chunk
 	void MeshChunk(const glm::ivec3& t_ToMesh);
 	void ProcessChunks(const glm::vec3& t_PlayerPosition);
 	DrawPool m_DrawPool;
 	ChunkMap m_Chunks;
-	std::deque<glm::ivec3> m_MeshingQueue;
 	bool m_LoadUnloadChunks;
 	int m_ViewDistance;
+
+	// Threading
 	std::condition_variable m_ChunkUpdatesVariable;
-	std::mutex m_ChunkQueueMutex;
-	std::queue<glm::ivec3> m_ChunksToRemove;
-	std::queue<std::shared_ptr<Chunk>> m_ChunksToAdd;
+	std::mutex m_Mutex;
+	std::deque<glm::ivec3> m_ChunksToRemove;
+	std::deque<std::shared_ptr<Chunk>> m_ChunksToAdd;
+	std::deque<glm::ivec3> m_ChunksToMesh;
 	void ThreadedUnloadAndLoad(const Camera& camera);
 	std::thread m_Thread;
 };
