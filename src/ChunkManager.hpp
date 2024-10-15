@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <shared_mutex>
 
+#include "AtomicQueue.h"
 #include "ChunkMap.hpp"
 
 // Manages a list of chunks, allowing removal and adding
@@ -19,10 +20,6 @@ public:
 	ChunkManager();
 	~ChunkManager();
 
-	// Add a Chunk
-	void AddChunk(const glm::ivec3& t_ChunkPosition);
-	// Remove a Chunk
-	void RemoveChunk(const glm::ivec3& t_ChunkPosition);
 	// Load/Unload around player
 	void LoadUnloadAroundPlayer(const Camera& camera);
 	// Render all chunks in the draw pool
@@ -37,9 +34,6 @@ public:
 	ChunkManager& operator=(ChunkManager&& t_Other) noexcept = delete;
 
 private:
-	ChunkMap::iterator RemoveChunk(ChunkMap::iterator& t_Iterator);
-	// Get a chunk from the list
-	ChunkMap::iterator GetChunk(const glm::ivec3& t_ChunkPosition);
 	// Mesh a chunk
 	void MeshChunk(const glm::ivec3& t_ToMesh);
 	void ProcessChunks(const glm::vec3& t_PlayerPosition);
@@ -51,9 +45,10 @@ private:
 	// Threading
 	std::condition_variable m_ChunkUpdatesVariable;
 	std::mutex m_Mutex;
-	std::deque<glm::ivec3> m_ChunksToRemove;
-	std::deque<std::shared_ptr<Chunk>> m_ChunksToAdd;
-	std::deque<glm::ivec3> m_ChunksToMesh;
+	AtomicQueue<glm::ivec3> m_ChunksToRemove;
+	AtomicQueue<std::shared_ptr<Chunk>> m_ChunksToAdd;
+	AtomicQueue<glm::ivec3> m_ChunksToMesh;
+
 	void ThreadedUnloadAndLoad(const Camera& camera);
 	std::thread m_Thread;
 };
