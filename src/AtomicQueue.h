@@ -53,6 +53,19 @@ public:
 	{
 		return m_Head == m_Tail;
 	}
+
+	int length()
+	{
+		if (m_Head == m_Tail)
+			return 0;
+		const int diff = m_Head - m_Tail;
+		if (diff > 0)
+		{
+			return diff;
+		}
+
+		return m_Size + diff;
+	}
 private:
 	std::atomic_int m_Head;
 	std::atomic_int m_Tail;

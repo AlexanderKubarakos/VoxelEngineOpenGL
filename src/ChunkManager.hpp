@@ -11,7 +11,13 @@
 
 #include "AtomicQueue.h"
 #include "ChunkMap.hpp"
-
+struct MeshData
+{
+	MeshData() = default;
+	MeshData(const std::array<std::vector<FaceVertex>, 6>& t_FaceData, const glm::ivec3& t_Chunk) : m_FaceData(t_FaceData), m_Chunk(t_Chunk) {}
+	std::array<std::vector<FaceVertex>, 6> m_FaceData;
+	glm::ivec3 m_Chunk;
+};
 // Manages a list of chunks, allowing removal and adding
 // and all rendering functionality too
 class ChunkManager
@@ -48,7 +54,9 @@ private:
 	AtomicQueue<glm::ivec3> m_ChunksToRemove;
 	AtomicQueue<std::shared_ptr<Chunk>> m_ChunksToAdd;
 	AtomicQueue<glm::ivec3> m_ChunksToMesh;
+	AtomicQueue<MeshData> m_MeshDataToProcesses;
 
 	void ThreadedUnloadAndLoad(const Camera& camera);
-	std::thread m_Thread;
+	std::thread m_Thread, m_ThreadMeshing;
+	void ThreadedMeshing();
 };
