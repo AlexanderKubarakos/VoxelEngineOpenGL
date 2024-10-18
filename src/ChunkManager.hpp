@@ -40,9 +40,7 @@ public:
 	ChunkManager& operator=(ChunkManager&& t_Other) noexcept = delete;
 
 private:
-	// Mesh a chunk
-	void MeshChunk(const glm::ivec3& t_ToMesh);
-	void ProcessChunks(const glm::vec3& t_PlayerPosition);
+	void ProcessChunks();
 	DrawPool m_DrawPool;
 	ChunkMap m_Chunks;
 	bool m_LoadUnloadChunks;
@@ -50,7 +48,7 @@ private:
 
 	// Threading
 	std::condition_variable m_ChunkUpdatesVariable;
-	std::mutex m_Mutex;
+	std::shared_mutex m_Mutex;
 	AtomicQueue<glm::ivec3> m_ChunksToRemove;
 	AtomicQueue<std::shared_ptr<Chunk>> m_ChunksToAdd;
 	AtomicQueue<glm::ivec3> m_ChunksToMesh;
@@ -59,4 +57,10 @@ private:
 	void ThreadedUnloadAndLoad(const Camera& camera);
 	std::thread m_Thread, m_ThreadMeshing;
 	void ThreadedMeshing();
+	void MeshUp(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh);
+	void MeshDown(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh);
+	void MeshSouth(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh);
+	void MeshNorth(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh);
+	void MeshEast(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh);
+	void MeshWest(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh);
 };
