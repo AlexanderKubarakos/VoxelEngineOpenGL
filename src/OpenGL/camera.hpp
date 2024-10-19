@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include "Utilities.hpp"
 #include "Input.hpp"
+#include "Tracy.hpp"
 
 #include "glm/ext/matrix_transform.hpp"
 
@@ -18,6 +19,7 @@ public:
 	glm::mat4 GetViewMatrix() const { return glm::lookAt(m_CameraPos, m_CameraFront + m_CameraPos, m_CameraUp); }
 	void ProcessInput()
 	{
+		ZoneScoped;
 		float dt = static_cast<float>(Utilities::GetDeltaTime());
 		float sprint = 1.0f;
 		if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT))
@@ -101,6 +103,7 @@ private:
 
 	void UpdateCameraVectors()
 	{
+		ZoneScoped;
 		// calculate the new Front vector
 		glm::vec3 front;
 		front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));

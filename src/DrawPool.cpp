@@ -26,6 +26,7 @@ DrawPool::~DrawPool()
 // t_Size is vertex count, face count now
 DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 {
+	ZoneScoped;
 	if (t_Size > m_BucketSize || m_EmptyBuckets.empty())
 	{
 		ERROR_PRINT("Error: While trying to allocate bucket, out of buckets, or requesting no (0) space in bucket. Buckets Left: " << m_EmptyBuckets.size())
@@ -48,6 +49,7 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 
 void DrawPool::FillBucket(BucketID t_Id, const std::vector<FaceVertex>& t_Data, Utilities::DIRECTION t_MeshDirection, glm::ivec4& t_ExtraData)
 {
+	ZoneScoped;
 	if (t_Data.size() > m_BucketSize)
 	{
 		ERROR_PRINT("Error: Trying to over fill bucket. Bucket Length: " << m_BucketSize << " and Data Length: " << t_Data.size())
@@ -72,6 +74,7 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<FaceVertex>& t_Data, 
 
 void DrawPool::FreeBucket(BucketID t_Id)
 {
+	ZoneScoped;
 	if (t_Id == nullptr)
 		return;
 	// Push to the back of the queue where this bucket starts
@@ -87,6 +90,7 @@ void DrawPool::FreeBucket(BucketID t_Id)
 
 void DrawPool::FreeBucket(std::array<DrawPool::BucketID, 6>& t_Buckets)
 {
+	ZoneScoped;
 	for (auto& id : t_Buckets)
 	{
 		FreeBucket(id);
@@ -97,6 +101,7 @@ void DrawPool::FreeBucket(std::array<DrawPool::BucketID, 6>& t_Buckets)
 // Bucket Size is vertex count
 void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 {
+	ZoneScoped;
 	m_BucketQuantity = t_BucketQuantity;
 	m_BucketSize = t_BucketSize;
 
@@ -141,6 +146,7 @@ void DrawPool::Reserve(const size_t t_BucketQuantity, const size_t t_BucketSize)
 
 void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 {
+	ZoneScoped;
 	if (!m_CullingMaster)
 		return;
 	auto frustum = LinAlg::frustumExtraction(t_MVP);
@@ -196,6 +202,7 @@ void DrawPool::UpdateDrawCalls(const glm::mat4& t_MVP, const Camera& camera)
 
 void DrawPool::Render(const glm::mat4& t_MVP, const glm::mat4& t_MV, const Camera& camera)
 {
+	ZoneScoped;
 	UpdateDrawCalls(t_MVP, camera);
 	m_Shader.Use();
 	m_Shader.SetMatrix4f(m_MVPUniformLocation, t_MVP);
@@ -206,6 +213,7 @@ void DrawPool::Render(const glm::mat4& t_MVP, const glm::mat4& t_MV, const Camer
 
 void DrawPool::Debug()
 {
+	ZoneScoped;
 	if (ImGui::CollapsingHeader("Draw Pool", ImGuiTreeNodeFlags_None))
 	{
 		ImGui::Text("Bucket Quantity: %i", m_BucketQuantity);

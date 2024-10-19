@@ -12,6 +12,7 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
+#include "Tracy.hpp"
 
 void Game::Stop()
 {
@@ -80,12 +81,13 @@ void Game::Run()
 		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 		glfwSwapBuffers(m_Window.GetWindowPointer()); // Swap buffers
+		FrameMark;
         glfwPollEvents(); // Poll events
 		if (m_Window.ShouldWindowClose() || Input::IsKeyDown(GLFW_KEY_ESCAPE)) // Close game if needed
 		{
 			Stop();
 		}
 	}
+	TracyNoop;
 }

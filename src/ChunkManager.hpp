@@ -40,14 +40,13 @@ public:
 	ChunkManager& operator=(ChunkManager&& t_Other) noexcept = delete;
 
 private:
-	void ProcessChunks();
+	void ProcessChunks(const glm::vec3& t_PlayerPosition);
 	DrawPool m_DrawPool;
 	ChunkMap m_Chunks;
 	bool m_LoadUnloadChunks;
 	int m_ViewDistance;
 
 	// Threading
-	std::condition_variable m_ChunkUpdatesVariable;
 	std::shared_mutex m_Mutex;
 	AtomicQueue<glm::ivec3> m_ChunksToRemove;
 	AtomicQueue<std::shared_ptr<Chunk>> m_ChunksToAdd;

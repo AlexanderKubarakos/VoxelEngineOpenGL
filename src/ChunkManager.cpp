@@ -3,8 +3,12 @@
 #include "imgui.h"
 #include <set>
 
-std::atomic_bool stopToken{ false };
+#include <common/TracySystem.hpp>
 
+#include "Tracy.hpp"
+
+std::atomic_bool stopToken{ false };
+std::atomic_bool signal{ true };
 ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
 m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
 {
@@ -13,9 +17,6 @@ m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16
 
 ChunkManager::~ChunkManager()
 {
-	stopToken = true;
-	while (stopToken)
-		m_ChunkUpdatesVariable.notify_all();
 	stopToken = true;
 	m_Thread.join();
 	m_ThreadMeshing.join();
@@ -34,67 +35,91 @@ void ChunkManager::LoadUnloadAroundPlayer(const Camera& camera)
 	}
 	else
 	{
-		ProcessChunks();
+		ProcessChunks(camera.GetAtomicCameraPos());
 	}
 }
 
 void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 {
+	tracy::SetThreadName("Chunk Loading/Unloading");
 	while (true)
 	{
 		std::shared_lock lock { m_Mutex, std::defer_lock };
+
+		while (!signal && !stopToken);
+		signal = false;
+		while (!m_ChunksToAdd.empty() || !m_ChunksToRemove.empty() && !stopToken);
+		lock.lock();
 		if (stopToken)
 			break;
-		while (!m_ChunksToAdd.empty() || !m_ChunksToRemove.empty());
-		lock.lock();
-		glm::vec3 cameraPos = camera.GetAtomicCameraPos();
-		const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(cameraPos) / 32;
-		int leftXBound = playerPositionChunkSpace.x - m_ViewDistance;
-		int rightXBound = playerPositionChunkSpace.x + m_ViewDistance;
-		int farZBound = playerPositionChunkSpace.z - m_ViewDistance;
-		int closeZBound = playerPositionChunkSpace.z + m_ViewDistance;
-
-		std::deque<glm::ivec3> removeQueue;
-		std::deque<glm::ivec3> loadQueue;
-		auto inViewRange = [=](const auto& item)
-			{
-				auto const& [key, chunk] = item;
-				return key.x < leftXBound || key.x > rightXBound
-					|| key.z < farZBound || key.z > closeZBound;
-			};
-
-		for (auto first = m_Chunks.begin(), last = m_Chunks.end(); first != last;)
 		{
-			if (inViewRange(*first))
+			ZoneScoped;
+			glm::vec3 cameraPos = camera.GetAtomicCameraPos();
+			const glm::ivec3 playerPositionChunkSpace = static_cast<glm::ivec3>(cameraPos) / 32;
+			int leftXBound = playerPositionChunkSpace.x - m_ViewDistance;
+			int rightXBound = playerPositionChunkSpace.x + m_ViewDistance;
+			int farZBound = playerPositionChunkSpace.z - m_ViewDistance;
+			int closeZBound = playerPositionChunkSpace.z + m_ViewDistance;
+
+			std::deque<glm::ivec3> removeQueue;
+			std::deque<glm::ivec3> loadQueue;
+			auto inViewRange = [=](const auto& item)
+				{
+					auto const& [key, chunk] = item;
+					return key.x < leftXBound || key.x > rightXBound
+						|| key.z < farZBound || key.z > closeZBound;
+				};
+
+			for (auto first = m_Chunks.begin(), last = m_Chunks.end(); first != last;)
 			{
-				removeQueue.push_back(first->first);
+				if (inViewRange(*first))
+				{
+					removeQueue.push_back(first->first);
+				}
+				++first;
 			}
-			++first;
+
+			// TODO: Much more efficient way is to only do this when we go between chunks, and even then we can see what direction we moved in and only load that "sides" chunks
+			for (int x = -m_ViewDistance + playerPositionChunkSpace.x; x <= m_ViewDistance + playerPositionChunkSpace.x; x++)
+				for (int z = -m_ViewDistance + playerPositionChunkSpace.z; z <= m_ViewDistance + playerPositionChunkSpace.z; z++)
+					for (int y = -3; y <= 3; y++)
+					{
+						glm::ivec3 chunkPos{ x, y, z };
+						// TODO: maybe get rid of max size?
+						if (!m_Chunks.contains(chunkPos))
+						{
+							loadQueue.emplace_back(chunkPos);
+						}
+					}
+			if (loadQueue.size() == 2048)
+				signal = true;
+			lock.unlock();
+
+			for (auto& i : removeQueue)
+				m_ChunksToRemove.push(i);
+
+			for (auto& i : loadQueue)
+			{
+				auto ptr = std::make_shared<Chunk>(i);
+				m_ChunksToAdd.push(ptr);
+				// TODO: maybe an arena allocator
+			}
 		}
 		
-		// TODO: Much more efficient way is to only do this when we go between chunks, and even then we can see what direction we moved in and only load that "sides" chunks
-		for (int x = -m_ViewDistance + playerPositionChunkSpace.x; x <= m_ViewDistance + playerPositionChunkSpace.x; x++)
-			for (int z = -m_ViewDistance + playerPositionChunkSpace.z; z <= m_ViewDistance + playerPositionChunkSpace.z; z++)
-				for (int y = -3; y <= 3; y++)
-				{
-					glm::ivec3 chunkPos{ x, y, z };
-					if (!m_Chunks.contains(chunkPos) && loadQueue.size() < 2048)
-					{
-						loadQueue.emplace_back(chunkPos);
-					}
-				}
-		lock.unlock();
-		for (auto& i : loadQueue)
-			m_ChunksToAdd.push(std::make_shared<Chunk>(i));
-		for (auto& i : removeQueue)
-			m_ChunksToRemove.push(i);
 	}
 	stopToken = false;
 }
-
-void ChunkManager::ProcessChunks()
+glm::ivec3 previousChunk = { 0,0,-999999 };
+void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
 {
+	ZoneScoped;
 	std::unique_lock lock{ m_Mutex, std::defer_lock };
+	if (previousChunk != glm::ivec3(t_PlayerPosition / 32.0f))
+	{
+		LOG_PRINT("Changing chunk...")
+		previousChunk = glm::ivec3(t_PlayerPosition / 32.0f);
+		signal = true;
+	}
 	// 1. Make any changes to the Hashmap, add new chunks, remove old chunks, checking if all threads are finished first, if not skip to next frame
 	if ((!m_ChunksToRemove.empty() || !m_ChunksToAdd.empty()) && lock.try_lock())
 	{
@@ -115,46 +140,45 @@ void ChunkManager::ProcessChunks()
 		lock.unlock();
 	}
 
-	if (!m_MeshDataToProcesses.empty())
+	while (!m_MeshDataToProcesses.empty())
 	{
-		while (!m_MeshDataToProcesses.empty())
+		auto data = m_MeshDataToProcesses.pop();
+		auto itr = m_Chunks.find(data.m_Chunk);
+		if (itr == m_Chunks.end())
+			continue;
+		auto& buckets = itr->second->m_BucketIDs;
+		auto& faceData = data.m_FaceData;
+
+		// Why free the buckets first??
+		m_DrawPool.FreeBucket(buckets);
+
+		for (int i = 0; i < 6; i++)
 		{
-			auto data = m_MeshDataToProcesses.pop();
-			auto itr = m_Chunks.find(data.m_Chunk);
-			if (itr == m_Chunks.end())
+			Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
+			if (faceData[direction].empty())
 				continue;
-			auto& buckets = itr->second->m_BucketIDs;
-			auto& faceData = data.m_FaceData;
 
-			// Why free the buckets first??
-			m_DrawPool.FreeBucket(buckets);
+			buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(faceData[direction].size()));
 
-			for (int i = 0; i < 6; i++)
-			{
-				Utilities::DIRECTION direction = static_cast<Utilities::DIRECTION>(i);
-				if (faceData[direction].empty())
-					continue;
-
-				buckets[direction] = m_DrawPool.AllocateBucket(static_cast<int>(faceData[direction].size()));
-
-				auto extraData = glm::ivec4(data.m_Chunk, 0);
-				m_DrawPool.FillBucket(buckets[direction], faceData[direction], direction, extraData);
-			}
+			auto extraData = glm::ivec4(data.m_Chunk, 0);
+			m_DrawPool.FillBucket(buckets[direction], faceData[direction], direction, extraData);
 		}
 	}
 }
 
 void ChunkManager::RenderChunks(const Camera& t_Camera, const glm::mat4& t_Projection)
 {
+	ZoneScoped;
 	m_DrawPool.Render(t_Projection * t_Camera.GetViewMatrix(), t_Camera.GetViewMatrix(), t_Camera);
 }
 
 void ChunkManager::ShowDebugInfo()
 {
+	ZoneScoped;
 	ImGui::Checkbox("Load and Unload Chunks Around Player", &m_LoadUnloadChunks);
 	if (ImGui::SliderInt("Render Distance", &m_ViewDistance, 1, 32))
 	{
-		m_ChunkUpdatesVariable.notify_one();
+		signal = true;
 	}
 		
 	if(ImGui::Button("Re-mesh All Chunks"))
@@ -173,11 +197,16 @@ void ChunkManager::ShowDebugInfo()
 
 void ChunkManager::ThreadedMeshing()
 {
+	tracy::SetThreadName("Meshing");
+	// TODO: dont allow meshing to hog the mutex, we need to dump our loaded chunk data to main thread
+	// since we hog the shared mutex, process chunk almost never runs, and loading chunks cant continue
 	while (!stopToken)
 	{
 		while (!m_ChunksToMesh.empty())
 		{
+			ZoneScoped;
 			std::shared_lock lock{ m_Mutex};
+			
 			auto t_ToMesh = m_ChunksToMesh.pop();
 			auto itr = m_Chunks.find(t_ToMesh);
 			if (itr == m_Chunks.end())
@@ -185,15 +214,8 @@ void ChunkManager::ThreadedMeshing()
 
 			auto& chunk = *itr;
 			auto blockData = chunk.second->m_BlockData;
-			// DO empty check
-			bool empty = true;
-			for (int i = 0; i < 32 * 32 * 32 && empty; i++)
-			{
-				if (blockData[i] != 0)
-					empty = false;
-			}
 
-			if (empty)
+			if (chunk.second->allAir)
 				continue;
 
 			std::array<int8_t*, 6> neighbors{ nullptr };

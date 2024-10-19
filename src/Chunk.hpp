@@ -33,6 +33,7 @@ public:
 	glm::ivec3 m_ChunkPosition;
 	// Data for voxels, 16^3
 	int8_t* m_BlockData;
+	bool allAir;
 	// Bucket ID of supplied DrawPool
 	std::array<DrawPool::BucketID, 6> m_BucketIDs;
 };
