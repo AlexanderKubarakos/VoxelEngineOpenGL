@@ -9,7 +9,7 @@ layout(std430, binding = 1) buffer Data {
 } packedData;
 
 out vec3 vertPos;
-out vec3 color;
+flat out uint type;
 out vec3 normal;
 
 uniform mat4 MVP;
@@ -48,6 +48,7 @@ void main()
     uint z = (data >> 12) & 63;
     uint lengthX = ((data >> 18) & 63);
     uint lengthY = ((data >> 24) & 63);
+    type = ((data >> 30) & 63);
 
     vec3 position = facePositions[indices[currVertexID]];
     
@@ -89,5 +90,4 @@ void main()
     gl_Position = MVP * vec4(position, 1.0);
     vec4 viewSpace = MV * vec4(position, 1.0);
     vertPos = vec3(viewSpace) / viewSpace.w;
-    color = vec3(1,1,1);
 }

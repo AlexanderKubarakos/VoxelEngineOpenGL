@@ -2,14 +2,20 @@
 out vec4 FragColor;
 
 in vec3 vertPos;
-in vec3 color;
+flat in uint type;
 in vec3 normal;
+
+const vec3 colorLoopUp[3] = {
+    vec3(0,0,0), // air
+    vec3(169,169,169), // stone
+    vec3(139,69,19) // dirt
+};
 
 void main()
 {
     int mode = 1;
     vec3 ambientColor = vec3(52, 25, 0) / 255.0f;
-    vec3 diffuseColor = vec3(204, 102, 0)/ 255.0f;
+    vec3 diffuseColor = colorLoopUp[type] / 255.0f;
     vec3 specularColor = vec3(255, 255, 255) / 255.0f;
 
     float Ka = 1;   // Ambient reflection coefficient
@@ -30,7 +36,8 @@ void main()
         specular = pow(specAngle, shininessVal);
       }
       
-        FragColor = vec4(Ka * ambientColor +
+    FragColor = vec4(Ka * ambientColor +
                 Kd * lambertian * diffuseColor +
                 Ks * specular * specularColor, 1.0);
+   // FragColor = vec4(ambientColor, 1);
 }

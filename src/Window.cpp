@@ -1,5 +1,6 @@
 #include "Window.hpp"
 #include "Input.hpp"
+#include "TracyOpenGL.hpp"
 
 #include <iostream>
 
@@ -83,7 +84,7 @@ Window::Window(int t_W, int t_H, const char* t_Name)
     glViewport(0, 0, t_W, t_H);
     glEnable(GL_DEPTH_TEST);
     glfwSwapInterval(0);
-
+    TracyGpuContext
     constexpr bool debug = true;
     if (debug)
     {

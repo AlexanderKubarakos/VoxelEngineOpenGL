@@ -172,6 +172,7 @@
     <Library Include="libs\glfw3.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="C:\Users\Tooty\Desktop\TracyOpenGL.hpp" />
     <ClInclude Include="imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="imgui\imconfig.h" />
@@ -493,6 +494,7 @@
     <ClInclude Include="src\Input.hpp" />
     <ClInclude Include="src\LinearAlgebra.hpp" />
     <ClInclude Include="src\tracy\Tracy.hpp" />
+    <ClInclude Include="src\tracy\TracyOpenGL.hpp" />
     <ClInclude Include="src\Utilities.hpp" />
     <ClInclude Include="src\Game.hpp" />
     <ClInclude Include="src\OpenGL\camera.hpp" />

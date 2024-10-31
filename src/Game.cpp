@@ -13,6 +13,8 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "Tracy.hpp"
+#include "TracyOpenGL.hpp"
+
 
 void Game::Stop()
 {
@@ -40,6 +42,7 @@ void Game::Run()
 
 	while (m_Running)
 	{
+		TracyGpuZone("GPU")
         // Start Frame
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear buffers
         Utilities::ProcessFrame(m_Window.GetWindowPointer()); // Do start of frame actions, ex. calculate delta time
@@ -84,6 +87,8 @@ void Game::Run()
 		glfwSwapBuffers(m_Window.GetWindowPointer()); // Swap buffers
 		FrameMark;
         glfwPollEvents(); // Poll events
+		
+		TracyGpuCollect
 		if (m_Window.ShouldWindowClose() || Input::IsKeyDown(GLFW_KEY_ESCAPE)) // Close game if needed
 		{
 			Stop();

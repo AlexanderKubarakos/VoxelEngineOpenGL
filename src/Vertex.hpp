@@ -5,12 +5,13 @@ struct FaceVertex
 {
 	uint32_t position;
 
-	FaceVertex(int x, int y, int z, int lengthHorizontal, int lengthVertical) {
+	FaceVertex(int x, int y, int z, int lengthHorizontal, int lengthVertical, int type) {
 		assert(x < 32 && x >= 0 && y < 32 && y >= 0 && z < 32 && z >= 0);
 		x |= y << 6;
 		x |= z << 12;
 		x |= lengthHorizontal << 18;
 		x |= lengthVertical << 24;
+		x |= type << 30;
 		position = x;
 	}
 

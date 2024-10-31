@@ -18,7 +18,10 @@ Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_B
 				// this can be made a lot better
 				if (noiseOutput[x + z * 32] * 32.0f > static_cast<float>(y + t_ChunkPosition.y * 32))
 				{
-					m_BlockData[x + 32 * y + z * 32 * 32] = 1;
+					if (y + t_ChunkPosition.y * 32 > 16)
+						m_BlockData[x + 32 * y + z * 32 * 32] = 2;
+					else
+						m_BlockData[x + 32 * y + z * 32 * 32] = 1;
 					allAir = false;
 				}
 			}

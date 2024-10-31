@@ -7,7 +7,8 @@
 
 #include "Tracy.hpp"
 
-std::atomic_bool stopToken{ false };
+std::atomic_bool stopToken1{ false };
+std::atomic_bool stopToken2{ false };
 std::atomic_bool signal{ true };
 ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
 m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
@@ -17,8 +18,9 @@ m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16
 
 ChunkManager::~ChunkManager()
 {
-	stopToken = true;
+	stopToken1 = true;
 	m_Thread.join();
+	stopToken2 = true;
 	m_ThreadMeshing.join();
 }
 
@@ -46,12 +48,12 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 	{
 		std::shared_lock lock { m_Mutex, std::defer_lock };
 
-		while (!signal && !stopToken);
+		while (!signal && !stopToken1);
 		signal = false;
-		while (!m_ChunksToAdd.empty() || !m_ChunksToRemove.empty() && !stopToken);
+		while ((!m_ChunksToAdd.empty() || !m_ChunksToRemove.empty()) && !stopToken1);
+		if (stopToken1)
+			return;
 		lock.lock();
-		if (stopToken)
-			break;
 		{
 			ZoneScoped;
 			glm::vec3 cameraPos = camera.GetAtomicCameraPos();
@@ -105,9 +107,7 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 				// TODO: maybe an arena allocator
 			}
 		}
-		
 	}
-	stopToken = false;
 }
 glm::ivec3 previousChunk = { 0,0,-999999 };
 void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
@@ -191,16 +191,26 @@ void ChunkManager::ShowDebugInfo()
 	}
 	ImGui::Text("Chunk Count: %i", m_Chunks.size());
 	ImGui::Text("Chunk Data Size: %iMB", m_Chunks.size() * 32 * 32 * 32 * sizeof(int8_t)/1024/1024);
+	ImGui::Text("To Add Empty %i", m_ChunksToAdd.empty());
+	ImGui::Text("To Remove Empty %i", m_ChunksToRemove.empty());
+	ImGui::Text("To Mesh Empty %i", m_ChunksToMesh.empty());
 	m_DrawPool.Debug();
 }
 //TODO: add per side re meshing, aka if a chunk on this chunks top boarder loads, we only need to redo that bucket
 
+// TODO: maybe only mesh when all neighbors are there
+
 void ChunkManager::ThreadedMeshing()
 {
 	tracy::SetThreadName("Meshing");
-	// TODO: dont allow meshing to hog the mutex, we need to dump our loaded chunk data to main thread
-	// since we hog the shared mutex, process chunk almost never runs, and loading chunks cant continue
-	while (!stopToken)
+
+	std::array<int8_t*, 6> neighbors{ nullptr };
+	for (auto& ptr : neighbors)
+	{
+		ptr = new int8_t[32 * 32 * 32];
+	}
+
+	while (!stopToken2)
 	{
 		while (!m_ChunksToMesh.empty())
 		{
@@ -210,41 +220,66 @@ void ChunkManager::ThreadedMeshing()
 			auto t_ToMesh = m_ChunksToMesh.pop();
 			auto itr = m_Chunks.find(t_ToMesh);
 			if (itr == m_Chunks.end())
-				return;
+				continue; // Going to meshing that chunk, need to handle this
 
 			auto& chunk = *itr;
 			auto blockData = chunk.second->m_BlockData;
 
 			if (chunk.second->allAir)
 				continue;
-
-			std::array<int8_t*, 6> neighbors{ nullptr };
+			
+			std::array<bool, 6> validNeighbor{ false };
 
 			auto otherChunk = m_Chunks.find(t_ToMesh + glm::ivec3(0, 1, 0));
 			if (otherChunk != m_Chunks.end())
-				neighbors[Utilities::UP] = otherChunk->second->m_BlockData;
-
+			{
+				ZoneScopedN("Memcpy Up");
+				memcpy(neighbors[Utilities::UP], otherChunk->second->m_BlockData, sizeof(int8_t) * 32 * 32 * 32);
+				validNeighbor[Utilities::UP] = true;
+			}
+				
 			otherChunk = m_Chunks.find(t_ToMesh + glm::ivec3(0, -1, 0));
 			if (otherChunk != m_Chunks.end())
-				neighbors[Utilities::DOWN] = otherChunk->second->m_BlockData;
+			{
+				ZoneScopedN("Memcpy Down");
+				memcpy(neighbors[Utilities::DOWN], otherChunk->second->m_BlockData, sizeof(int8_t) * 32 * 32 * 32);
+				validNeighbor[Utilities::DOWN] = true;
+			}
 
 			otherChunk = m_Chunks.find(t_ToMesh + glm::ivec3(0, 0, 1));
 			if (otherChunk != m_Chunks.end())
-				neighbors[Utilities::SOUTH] = otherChunk->second->m_BlockData;
+			{
+				ZoneScopedN("Memcpy South");
+				memcpy(neighbors[Utilities::SOUTH], otherChunk->second->m_BlockData, sizeof(int8_t) * 32 * 32 * 32);
+				validNeighbor[Utilities::SOUTH] = true;
+			}
 
 			otherChunk = m_Chunks.find(t_ToMesh + glm::ivec3(0, 0, -1));
 			if (otherChunk != m_Chunks.end())
-				neighbors[Utilities::NORTH] = otherChunk->second->m_BlockData;
+			{
+				ZoneScopedN("Memcpy North");
+				memcpy(neighbors[Utilities::NORTH], otherChunk->second->m_BlockData, sizeof(int8_t) * 32 * 32 * 32);
+				validNeighbor[Utilities::NORTH] = true;
+			}
 
 			otherChunk = m_Chunks.find(t_ToMesh + glm::ivec3(1, 0, 0));
 			if (otherChunk != m_Chunks.end())
-				neighbors[Utilities::EAST] = otherChunk->second->m_BlockData;
+			{
+				ZoneScopedN("Memcpy East");
+				memcpy(neighbors[Utilities::EAST], otherChunk->second->m_BlockData, sizeof(int8_t) * 32 * 32 * 32);
+				validNeighbor[Utilities::EAST] = true;
+			}
 
 			otherChunk = m_Chunks.find(t_ToMesh + glm::ivec3(-1, 0, 0));
 			if (otherChunk != m_Chunks.end())
-				neighbors[Utilities::WEST] = otherChunk->second->m_BlockData;
-			std::array<std::vector<FaceVertex>, 6> faceData;
+			{
+				ZoneScopedN("Memcpy West");
+				memcpy(neighbors[Utilities::WEST], otherChunk->second->m_BlockData, sizeof(int8_t) * 32 * 32 * 32);
+				validNeighbor[Utilities::WEST] = true;
+			}
+			lock.unlock();
 
+			std::array<std::vector<FaceVertex>, 6> faceData;
 			// xy plane, facing -layerZ
 			for (int layerZ = 0; layerZ < 32; layerZ++)
 			{
@@ -262,7 +297,7 @@ void ChunkManager::ThreadedMeshing()
 							if (layerZ != 0 && blockData[layerX + layerY * 32 + (layerZ - 1) * 32 * 32] != 0)
 								continue;
 
-							if (layerZ == 0 && (!neighbors[Utilities::NORTH] || neighbors[Utilities::NORTH][layerX + layerY * 32 + 31 * 32 * 32] != 0))
+							if (layerZ == 0 && (!validNeighbor[Utilities::NORTH] || neighbors[Utilities::NORTH][layerX + layerY * 32 + 31 * 32 * 32] != 0))
 								continue;
 
 							// Looking at voxel at [layerX, layerY]
@@ -333,7 +368,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subY] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY, voxelType };
 
 							faceData[Utilities::DIRECTION::NORTH].push_back(face);
 						}
@@ -354,7 +389,7 @@ void ChunkManager::ThreadedMeshing()
 							if (layerZ != 31 && blockData[layerX + layerY * 32 + (layerZ + 1) * 32 * 32] != 0)
 								continue;
 
-							if (layerZ == 31 && (!neighbors[Utilities::SOUTH] || neighbors[Utilities::SOUTH][layerX + layerY * 32 + 0 * 32 * 32] != 0))
+							if (layerZ == 31 && (!validNeighbor[Utilities::SOUTH] || neighbors[Utilities::SOUTH][layerX + layerY * 32 + 0 * 32 * 32] != 0))
 								continue;
 
 							int voxelType = blockData[layerX + layerY * 32 + layerZ * 32 * 32];
@@ -411,7 +446,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subY] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY, voxelType };
 
 							faceData[Utilities::DIRECTION::SOUTH].push_back(face);
 						}
@@ -432,7 +467,7 @@ void ChunkManager::ThreadedMeshing()
 							if (layerY != 31 && blockData[layerX + (layerY + 1) * 32 + layerZ * 32 * 32] != 0)
 								continue;
 
-							if (layerY == 31 && (!neighbors[Utilities::UP] || neighbors[Utilities::UP][layerX + 0 * 32 + layerZ * 32 * 32] != 0))
+							if (layerY == 31 && (!validNeighbor[Utilities::UP] || neighbors[Utilities::UP][layerX + 0 * 32 + layerZ * 32 * 32] != 0))
 								continue;
 
 							int voxelType = blockData[layerX + layerY * 32 + layerZ * 32 * 32];
@@ -490,7 +525,7 @@ void ChunkManager::ThreadedMeshing()
 							}
 
 							//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY + 1);
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ, voxelType };
 
 							faceData[Utilities::DIRECTION::UP].push_back(face);
 						}
@@ -511,7 +546,7 @@ void ChunkManager::ThreadedMeshing()
 							if (layerY != 0 && blockData[layerX + (layerY - 1) * 32 + layerZ * 32 * 32] != 0)
 								continue;
 
-							if (layerY == 0 && (!neighbors[Utilities::DOWN] || neighbors[Utilities::DOWN][layerX + 31 * 32 + layerZ * 32 * 32] != 0))
+							if (layerY == 0 && (!validNeighbor[Utilities::DOWN] || neighbors[Utilities::DOWN][layerX + 31 * 32 + layerZ * 32 * 32] != 0))
 								continue;
 
 							int voxelType = blockData[layerX + layerY * 32 + layerZ * 32 * 32];
@@ -568,7 +603,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subZ] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ, voxelType };
 
 							faceData[Utilities::DIRECTION::DOWN].push_back(face);
 						}
@@ -589,7 +624,7 @@ void ChunkManager::ThreadedMeshing()
 							if (layerX != 31 && blockData[(layerX + 1) + layerY * 32 + layerZ * 32 * 32] != 0)
 								continue;
 
-							if (layerX == 31 && (!neighbors[Utilities::EAST] || neighbors[Utilities::EAST][0 + layerY * 32 + layerZ * 32 * 32] != 0))
+							if (layerX == 31 && (!validNeighbor[Utilities::EAST] || neighbors[Utilities::EAST][0 + layerY * 32 + layerZ * 32 * 32] != 0))
 								continue;
 
 							int voxelType = blockData[layerX + layerY * 32 + layerZ * 32 * 32];
@@ -647,7 +682,7 @@ void ChunkManager::ThreadedMeshing()
 							}
 
 							//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX + 1);
-							FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ };
+							FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ, voxelType };
 
 							faceData[Utilities::DIRECTION::EAST].push_back(face);
 						}
@@ -668,7 +703,7 @@ void ChunkManager::ThreadedMeshing()
 							if (layerX != 0 && blockData[(layerX - 1) + layerY * 32 + layerZ * 32 * 32] != 0)
 								continue;
 
-							if (layerX == 0 && (!neighbors[Utilities::WEST] || neighbors[Utilities::WEST][31 + layerY * 32 + layerZ * 32 * 32] != 0))
+							if (layerX == 0 && (!validNeighbor[Utilities::WEST] || neighbors[Utilities::WEST][31 + layerY * 32 + layerZ * 32 * 32] != 0))
 								continue;
 
 							int voxelType = blockData[layerX + layerY * 32 + layerZ * 32 * 32];
@@ -725,7 +760,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subZ] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ };
+							FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ, voxelType };
 
 							faceData[Utilities::DIRECTION::WEST].push_back(face);
 						}
@@ -737,7 +772,10 @@ void ChunkManager::ThreadedMeshing()
 		}
 	}
 
-
+	for (auto& ptr : neighbors)
+	{
+		delete[] ptr;
+	}
 }
 
 //void ChunkManager::MeshUp(int8_t* t_NeighborData, std::vector<FaceVertex>& t_Data, const glm::ivec3& t_ToMesh)
