@@ -5,15 +5,13 @@
 
 #include <common/TracySystem.hpp>
 
-#include "Tracy.hpp"
-
 std::atomic_bool stopToken1{ false };
 std::atomic_bool stopToken2{ false };
 std::atomic_bool signal{ true };
 ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
 m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
 {
-
+	TracyLockableN(std::shared_mutex, m_Mutex, "Mutex for Chunk Data");
 }
 
 ChunkManager::~ChunkManager()
@@ -46,7 +44,7 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 	tracy::SetThreadName("Chunk Loading/Unloading");
 	while (true)
 	{
-		std::shared_lock lock { m_Mutex, std::defer_lock };
+		std::shared_lock<SharedLockableBase(std::shared_mutex)> lock { m_Mutex, std::defer_lock };
 
 		while (!signal && !stopToken1);
 		signal = false;
@@ -54,6 +52,7 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 		if (stopToken1)
 			return;
 		lock.lock();
+		LockMark(m_Mutex);
 		{
 			ZoneScoped;
 			glm::vec3 cameraPos = camera.GetAtomicCameraPos();
@@ -113,7 +112,7 @@ glm::ivec3 previousChunk = { 0,0,-999999 };
 void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
 {
 	ZoneScoped;
-	std::unique_lock lock{ m_Mutex, std::defer_lock };
+	std::unique_lock<SharedLockableBase(std::shared_mutex)> lock{ m_Mutex, std::defer_lock };
 	if (previousChunk != glm::ivec3(t_PlayerPosition / 32.0f))
 	{
 		LOG_PRINT("Changing chunk...")
@@ -123,6 +122,7 @@ void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
 	// 1. Make any changes to the Hashmap, add new chunks, remove old chunks, checking if all threads are finished first, if not skip to next frame
 	if ((!m_ChunksToRemove.empty() || !m_ChunksToAdd.empty()) && lock.try_lock())
 	{
+		LockMark(m_Mutex);
 		while (!m_ChunksToRemove.empty())
 		{
 			auto& bucket = m_Chunks.at(m_ChunksToRemove.peek())->m_BucketIDs;
@@ -215,8 +215,8 @@ void ChunkManager::ThreadedMeshing()
 		while (!m_ChunksToMesh.empty())
 		{
 			ZoneScoped;
-			std::shared_lock lock{ m_Mutex};
-			
+			std::shared_lock<SharedLockableBase(std::shared_mutex)> lock{ m_Mutex};
+			LockMark(m_Mutex);
 			auto t_ToMesh = m_ChunksToMesh.pop();
 			auto itr = m_Chunks.find(t_ToMesh);
 			if (itr == m_Chunks.end())

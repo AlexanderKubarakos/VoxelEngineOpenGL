@@ -11,6 +11,8 @@
 
 #include "AtomicQueue.h"
 #include "ChunkMap.hpp"
+#include "Tracy.hpp"
+
 struct MeshData
 {
 	MeshData() = default;
@@ -47,7 +49,7 @@ private:
 	int m_ViewDistance;
 
 	// Threading
-	std::shared_mutex m_Mutex;
+	TracySharedLockable(std::shared_mutex, m_Mutex);
 	AtomicQueue<glm::ivec3> m_ChunksToRemove;
 	AtomicQueue<std::shared_ptr<Chunk>> m_ChunksToAdd;
 	AtomicQueue<glm::ivec3> m_ChunksToMesh;
