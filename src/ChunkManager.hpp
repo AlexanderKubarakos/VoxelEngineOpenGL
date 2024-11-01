@@ -54,6 +54,8 @@ private:
 	AtomicQueue<std::shared_ptr<Chunk>> m_ChunksToAdd;
 	AtomicQueue<glm::ivec3> m_ChunksToMesh;
 	AtomicQueue<MeshData> m_MeshDataToProcesses;
+	std::atomic_bool m_StopToken{ false };
+	std::atomic_bool m_Signal{ true };
 
 	void ThreadedUnloadAndLoad(const Camera& camera);
 	std::thread m_Thread, m_ThreadMeshing;

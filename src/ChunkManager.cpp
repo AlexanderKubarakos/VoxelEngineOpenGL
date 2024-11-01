@@ -5,10 +5,7 @@
 
 #include <common/TracySystem.hpp>
 
-std::atomic_bool stopToken1{ false };
-std::atomic_bool stopToken2{ false };
-std::atomic_bool signal{ true };
-ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 2), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 1), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
 m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
 {
 	TracyLockableN(std::shared_mutex, m_Mutex, "Mutex for Chunk Data");
@@ -16,9 +13,8 @@ m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16
 
 ChunkManager::~ChunkManager()
 {
-	stopToken1 = true;
+	m_StopToken = true;
 	m_Thread.join();
-	stopToken2 = true;
 	m_ThreadMeshing.join();
 }
 
@@ -46,13 +42,17 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 	{
 		std::shared_lock<SharedLockableBase(std::shared_mutex)> lock { m_Mutex, std::defer_lock };
 
-		while (!signal && !stopToken1);
-		signal = false;
-		while ((!m_ChunksToAdd.empty() || !m_ChunksToRemove.empty()) && !stopToken1);
-		if (stopToken1)
+		while (!m_Signal && !m_StopToken);
+		m_Signal = false;
+
+		while ((!m_ChunksToAdd.empty() || !m_ChunksToRemove.empty()) && !m_StopToken);
+
+		if (m_StopToken)
 			return;
+
 		lock.lock();
 		LockMark(m_Mutex);
+
 		{
 			ZoneScoped;
 			glm::vec3 cameraPos = camera.GetAtomicCameraPos();
@@ -93,7 +93,7 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 						}
 					}
 			if (loadQueue.size() == 2048)
-				signal = true;
+				m_Signal = true;
 			lock.unlock();
 
 			for (auto& i : removeQueue)
@@ -117,7 +117,7 @@ void ChunkManager::ProcessChunks(const glm::vec3& t_PlayerPosition)
 	{
 		LOG_PRINT("Changing chunk...")
 		previousChunk = glm::ivec3(t_PlayerPosition / 32.0f);
-		signal = true;
+		m_Signal = true;
 	}
 	// 1. Make any changes to the Hashmap, add new chunks, remove old chunks, checking if all threads are finished first, if not skip to next frame
 	if ((!m_ChunksToRemove.empty() || !m_ChunksToAdd.empty()) && lock.try_lock())
@@ -178,7 +178,7 @@ void ChunkManager::ShowDebugInfo()
 	ImGui::Checkbox("Load and Unload Chunks Around Player", &m_LoadUnloadChunks);
 	if (ImGui::SliderInt("Render Distance", &m_ViewDistance, 1, 32))
 	{
-		signal = true;
+		m_Signal = true;
 	}
 		
 	if(ImGui::Button("Re-mesh All Chunks"))
@@ -210,7 +210,7 @@ void ChunkManager::ThreadedMeshing()
 		ptr = new int8_t[32 * 32 * 32];
 	}
 
-	while (!stopToken2)
+	while (!m_StopToken)
 	{
 		while (!m_ChunksToMesh.empty())
 		{
