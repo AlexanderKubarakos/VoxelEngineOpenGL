@@ -6,7 +6,7 @@
 #include <common/TracySystem.hpp>
 
 ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 1), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
-m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 4096 * 16 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
+m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 2048 + 1 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
 {
 	TracyLockableN(std::shared_mutex, m_Mutex, "Mutex for Chunk Data");
 }

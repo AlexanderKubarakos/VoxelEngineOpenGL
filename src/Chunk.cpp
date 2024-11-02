@@ -27,6 +27,7 @@ Chunk::Chunk(glm::ivec3 t_ChunkPosition) : m_ChunkPosition{t_ChunkPosition}, m_B
 			}
 		}
 	}
+	// 64 * 64 * 64
 }
 
 Chunk::~Chunk()

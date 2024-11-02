@@ -38,7 +38,7 @@ public:
 	{
 		if (m_Head == m_Tail)
 			throw std::out_of_range("Atomic Queue is Empty"); // empty
-		T copy = m_Data[m_Tail];
+		T copy = std::move(m_Data[m_Tail]);
 		m_Tail = (m_Tail + 1) % m_Size;
 		return copy;
 	}

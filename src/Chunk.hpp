@@ -5,6 +5,8 @@
 class Chunk
 {
 public:
+	static constexpr int CHUNK_DIMESION = 32;
+	static constexpr int CHUNK_DATA_SIZE_BTYES = sizeof(int8_t) * CHUNK_DIMESION * CHUNK_DIMESION * CHUNK_DIMESION;
 	Chunk(glm::ivec3 t_ChunkPosition);
 	~Chunk();
 
