@@ -43,12 +43,12 @@ void main()
     const uint data = packedData.data[index];
     const int currVertexID = gl_VertexID % 6;
 
-    uint x = data & 63;
-    uint y = (data >> 6) & 63;
-    uint z = (data >> 12) & 63;
-    uint lengthX = ((data >> 18) & 63);
-    uint lengthY = ((data >> 24) & 63);
-    type = ((data >> 30) & 63);
+    uint x = data & 31;
+    uint y = (data >> 5) & 31;
+    uint z = (data >> 10) & 31;
+    uint lengthX = ((data >> 15) & 31) + 1;
+    uint lengthY = ((data >> 20) & 31) + 1;
+    type = ((data >> 25) & 31);
 
     vec3 position = facePositions[indices[currVertexID]];
     

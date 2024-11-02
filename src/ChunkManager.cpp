@@ -368,7 +368,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subY] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY, voxelType };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX-1, lengthY-1, voxelType };
 
 							faceData[Utilities::DIRECTION::NORTH].push_back(face);
 						}
@@ -446,7 +446,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subY] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthY, voxelType };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX-1, lengthY-1, voxelType };
 
 							faceData[Utilities::DIRECTION::SOUTH].push_back(face);
 						}
@@ -525,7 +525,7 @@ void ChunkManager::ThreadedMeshing()
 							}
 
 							//sideAddXZ(layerX, layerZ, lengthX, lengthZ, layerY + 1);
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ, voxelType };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX-1, lengthZ-1, voxelType };
 
 							faceData[Utilities::DIRECTION::UP].push_back(face);
 						}
@@ -603,7 +603,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subZ] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthX, lengthZ, voxelType };
+							FaceVertex face{ layerX, layerY, layerZ, lengthX-1, lengthZ-1, voxelType };
 
 							faceData[Utilities::DIRECTION::DOWN].push_back(face);
 						}
@@ -682,7 +682,7 @@ void ChunkManager::ThreadedMeshing()
 							}
 
 							//sideAddYZ(layerY, layerZ, lengthY, lengthZ, layerX + 1);
-							FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ, voxelType };
+							FaceVertex face{ layerX, layerY, layerZ, lengthY-1, lengthZ-1, voxelType };
 
 							faceData[Utilities::DIRECTION::EAST].push_back(face);
 						}
@@ -760,7 +760,7 @@ void ChunkManager::ThreadedMeshing()
 								bitmap[subZ] |= voxelMask;
 							}
 
-							FaceVertex face{ layerX, layerY, layerZ, lengthY, lengthZ, voxelType };
+							FaceVertex face{ layerX, layerY, layerZ, lengthY-1, lengthZ-1, voxelType };
 
 							faceData[Utilities::DIRECTION::WEST].push_back(face);
 						}
