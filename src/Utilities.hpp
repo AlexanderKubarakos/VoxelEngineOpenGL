@@ -42,8 +42,6 @@ namespace Utilities
 	};
 	void ProcessFrame(GLFWwindow* t_Window);
 	double GetDeltaTime();
-	std::string vectorToString(glm::vec3 t_Vec);
-	std::string vectorToString(glm::ivec3 t_Vec);
 	struct VectorCompare {
 		template <typename T>
 		bool operator()(const T& lhs, const T& rhs) const {

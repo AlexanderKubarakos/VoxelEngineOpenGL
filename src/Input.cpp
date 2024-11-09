@@ -5,6 +5,7 @@
 namespace Input
 {
 	KeyState keyStates[GLFW_KEY_LAST];
+	KeyState mouseStates[GLFW_MOUSE_BUTTON_LAST];
 	float lastX = 0, lastY = 0;
 	bool firstTime = true;
 	glm::vec2 mouseDifference = { 0,0 };
@@ -24,6 +25,16 @@ bool Input::IsKeyDown(int t_GLFWKeyCode)
 bool Input::IsKeyPressed(int t_GLFWKeyCode)
 {
 	return keyStates[t_GLFWKeyCode] == KeyState::PRESSED;
+}
+
+bool Input::IsMouseButtonDown(int t_GLFWKeyCode)
+{
+	return mouseStates[t_GLFWKeyCode] == KeyState::DOWN || mouseStates[t_GLFWKeyCode] == KeyState::PRESSED;
+}
+
+bool Input::IsMouseButtonPressed(int t_GLFWKeyCode)
+{
+	return mouseStates[t_GLFWKeyCode] == KeyState::PRESSED;
 }
 
 void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -58,6 +69,11 @@ void Input::MouseCallback(GLFWwindow* window, double xposIn, double yposIn)
     lastY = ypos;
 }
 
+void Input::MouseButtonCallback(GLFWwindow* t_Window, int t_Button, int t_Action, int t_Mods)
+{
+	mouseStates[t_Button] = static_cast<KeyState>(t_Action);
+}
+
 void Input::ResetInputs(Window& t_Window)
 {
 	if (IsKeyPressed(GLFW_KEY_Z))
@@ -82,4 +98,12 @@ void Input::ResetInputs(Window& t_Window)
 		    keyState = DOWN;
 	    }
     }
+
+	for (auto& mouseState : mouseStates)
+	{
+		if (mouseState == PRESSED)
+		{
+			mouseState = DOWN;
+		}
+	}
 }

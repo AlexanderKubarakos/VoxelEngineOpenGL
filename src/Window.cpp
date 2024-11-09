@@ -72,6 +72,7 @@ Window::Window(int t_W, int t_H, const char* t_Name)
     glfwMakeContextCurrent(m_Window);
     glfwSetCursorPosCallback(m_Window, Input::MouseCallback);
     glfwSetKeyCallback(m_Window, Input::KeyCallback);
+    glfwSetMouseButtonCallback(m_Window, Input::MouseButtonCallback);
     glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetWindowSizeCallback(m_Window, WindowSizeCallback);
     glfwSwapInterval(0);

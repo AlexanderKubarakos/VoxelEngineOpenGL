@@ -6,7 +6,7 @@
 
 #include "imgui.h"
 
-DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), m_BackFaceCulling{false}, m_CullingMaster{true}
+DrawPool::DrawPool(const size_t t_BucketQuantity, const size_t t_BucketSize) : m_Shader("src/Shaders/vertexShader.glsl", "src/Shaders/fragmentShader.glsl"), m_BackFaceCulling{true}, m_CullingMaster{true}
 {
 	Reserve(t_BucketQuantity, t_BucketSize);
 
@@ -41,7 +41,7 @@ DrawPool::BucketID DrawPool::AllocateBucket(const int t_Size)
 
 	const size_t start = m_EmptyBuckets.back() - m_Start;
 	m_IndirectCallList.emplace_back(t_Size * 6, 1, static_cast<GLint>(start), new size_t(m_IndirectCallList.size()));
-	m_IndirectCallList.back().m_OpenGLFirstVertex = m_BucketSize * 6 * (start / m_BucketSize);
+	m_IndirectCallList.back().m_OpenGLFirstVertex = static_cast<GLuint>(m_BucketSize * 6 * (start / m_BucketSize));
 	m_EmptyBuckets.pop_back();
 
 	return m_IndirectCallList.back().m_BucketID;
@@ -69,7 +69,7 @@ void DrawPool::FillBucket(BucketID t_Id, const std::vector<FaceVertex>& t_Data, 
 	t_ExtraData.w = t_MeshDirection;
 	m_ExtraChunkDataList[*t_Id] = t_ExtraData;
 	m_IndirectCallList[*t_Id].m_Direction = t_MeshDirection;
-	m_IndirectCallList[*t_Id].m_VertexCount = t_Data.size() * 6;
+	m_IndirectCallList[*t_Id].m_VertexCount = static_cast<GLuint>(t_Data.size() * 6);
 }
 
 void DrawPool::FreeBucket(BucketID t_Id)

@@ -2,10 +2,11 @@
 
 #include "imgui.h"
 #include <set>
+#include "RayCasting.hpp"
 
 #include <common/TracySystem.hpp>
 
-ChunkManager::ChunkManager() : m_DrawPool(1024 * 32, 4096 * 1), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
+ChunkManager::ChunkManager() : m_DrawPool(1024 * 64, 4096 * 1), m_LoadUnloadChunks{ true }, m_ViewDistance {12},
 m_ChunksToRemove{4096*16}, m_ChunksToAdd{ 2048 + 1 }, m_ChunksToMesh{ 4096 * 16 }, m_MeshDataToProcesses{4096*16}
 {
 	TracyLockableN(std::shared_mutex, m_Mutex, "Mutex for Chunk Data");
@@ -83,8 +84,11 @@ void ChunkManager::ThreadedUnloadAndLoad(const Camera& camera)
 			// TODO: Much more efficient way is to only do this when we go between chunks, and even then we can see what direction we moved in and only load that "sides" chunks
 			for (int x = -m_ViewDistance + playerPositionChunkSpace.x; x <= m_ViewDistance + playerPositionChunkSpace.x; x++)
 				for (int z = -m_ViewDistance + playerPositionChunkSpace.z; z <= m_ViewDistance + playerPositionChunkSpace.z; z++)
-					for (int y = -3; y <= 3; y++)
+					for (int y = 0; y <= 3; y++)
 					{
+						if (x < 0 || y < 0 || z < 0)
+							continue;
+
 						glm::ivec3 chunkPos{ x, y, z };
 						// TODO: maybe get rid of max size?
 						if (!m_Chunks.contains(chunkPos))
@@ -196,6 +200,19 @@ void ChunkManager::ShowDebugInfo()
 	ImGui::Text("To Mesh Empty %i", m_ChunksToMesh.empty());
 	m_DrawPool.Debug();
 }
+
+void ChunkManager::CastRay(const Camera& t_Camera)
+{
+	std::lock_guard lock{ m_Mutex };
+	auto hit = RayCasting::CastRay(m_Chunks, t_Camera);
+	if (hit)
+	{
+		auto chunk = m_Chunks.find(hit.m_Chunk);
+		chunk->second->setVoxel(hit.m_Voxel, 0);
+		m_ChunksToMesh.push(hit.m_Chunk);
+	}
+}
+
 //TODO: add per side re meshing, aka if a chunk on this chunks top boarder loads, we only need to redo that bucket
 
 // TODO: maybe only mesh when all neighbors are there

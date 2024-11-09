@@ -23,7 +23,7 @@ bool LinAlg::isChunkInFrustum(const Frustum& t_Frustum, const glm::vec3& t_Pos)
 
 LinAlg::Frustum LinAlg::frustumExtraction(const glm::mat4& t_PV)
 {
-	Frustum frustum;
+	Frustum frustum{};
 
 	// Left clipping plane
 	frustum.planes[0].normal = glm::row(t_PV, 3) + glm::row(t_PV, 0);

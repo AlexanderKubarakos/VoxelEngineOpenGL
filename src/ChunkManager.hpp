@@ -16,7 +16,7 @@
 struct MeshData
 {
 	MeshData() = default;
-	MeshData(const std::array<std::vector<FaceVertex>, 6>& t_FaceData, const glm::ivec3& t_Chunk) : m_FaceData(t_FaceData), m_Chunk(t_Chunk) {}
+	MeshData(const std::array<std::vector<FaceVertex>, 6>& t_FaceData, const glm::ivec3& t_Chunk) : m_FaceData(std::move(t_FaceData)), m_Chunk(t_Chunk) {}
 	std::array<std::vector<FaceVertex>, 6> m_FaceData;
 	glm::ivec3 m_Chunk;
 };
@@ -35,6 +35,9 @@ public:
 
 	// Create debug info for ImGui
 	void ShowDebugInfo();
+
+	// Cast a ray
+	void CastRay(const Camera& t_Camera);
 
 	ChunkManager(const ChunkManager& t_Other) = delete;
 	ChunkManager(ChunkManager&& t_Other) noexcept = delete;

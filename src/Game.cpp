@@ -15,7 +15,6 @@
 #include "Tracy.hpp"
 #include "TracyOpenGL.hpp"
 
-
 void Game::Stop()
 {
 	m_Running = false;
@@ -66,6 +65,8 @@ void Game::Run()
 		ImGui::Text("Delta Time: %fms", Utilities::GetDeltaTime() * 1000);
 		ImGui::Text("FPS: %.2f", 1 / Utilities::GetDeltaTime());
 		ImGui::Text("Camera Position: x:%.2f, y:%.2f, z:%.2f", m_Camera.GetAtomicCameraPos().x, m_Camera.GetAtomicCameraPos().y, m_Camera.GetAtomicCameraPos().z);
+		ImGui::Text("Chunk Position: x:%i, y:%i, z:%i", static_cast<int>(m_Camera.GetAtomicCameraPos().x) / 32, static_cast<int>(m_Camera.GetAtomicCameraPos().y) / 32, static_cast<int>(m_Camera.GetAtomicCameraPos().z) / 32);
+		ImGui::Text("Camera Front: x:%.2f, y:%.2f, z:%.2f", m_Camera.CameraFront().x, m_Camera.CameraFront().y, m_Camera.CameraFront().z);
 		ImGui::Checkbox("Show Demo Window", &showDemoWindow);
 		if (showDemoWindow)
 			ImGui::ShowDemoWindow();
@@ -76,6 +77,12 @@ void Game::Run()
 		chunkManager.LoadUnloadAroundPlayer(m_Camera);
 		chunkManager.ShowDebugInfo();
 		chunkManager.RenderChunks(m_Camera, projection);
+
+		// Break Blocks
+		if (Input::IsMouseButtonPressed(GLFW_MOUSE_BUTTON_1))
+		{
+			chunkManager.CastRay(m_Camera);
+		}
 
         // End of frame
         Input::ResetInputs(m_Window); // Resets all need inputs
